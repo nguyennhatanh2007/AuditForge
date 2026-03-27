@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: 222 47% 11%;
+  --fg: 210 40% 98%;
+  --panel: 222 47% 14%;
+  --panel-fg: 210 40% 98%;
+  --accent: 158 84% 39%;
+  --accent-fg: 222 47% 11%;
+  --border: 215 27% 24%;
+  --muted: 217 33% 19%;
+  --muted-fg: 215 16% 65%;
+  --danger: 0 84% 60%;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: hsl(var(--bg));
+  color: hsl(var(--fg));
+}
+
+* {
+  border-color: hsl(var(--border));
+}
