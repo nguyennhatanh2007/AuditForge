@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -54,6 +55,7 @@ export function ConfigurationsClient() {
   const [items, setItems] = useState<SystemConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formModalOpen, setFormModalOpen] = useState(false);
@@ -159,19 +161,25 @@ export function ConfigurationsClient() {
   async function handleDelete(id: string) {
     if (!confirm('Xóa cấu hình này?')) return;
     try {
+      setTesting(id);
       await requestJson(`/api/configurations/${id}`, { method: 'DELETE' });
       await loadItems();
     } catch (exception) {
       setError(exception instanceof Error ? exception.message : 'Không xóa được cấu hình.');
+    } finally {
+      setTesting(null);
     }
   }
 
   async function handleTestConnection(id: string) {
     try {
+      setTesting(id);
       await requestJson(`/api/configurations/${id}/test`, { method: 'POST' });
       alert('Kiểm tra kết nối thành công.');
     } catch (exception) {
       alert(exception instanceof Error ? exception.message : 'Không kiểm tra được kết nối.');
+    } finally {
+      setTesting(null);
     }
   }
 
@@ -183,11 +191,18 @@ export function ConfigurationsClient() {
             <h3 className="text-base font-semibold">Danh sách cấu hình</h3>
             <p className="text-sm text-mutedFg">Quản lý kết nối iTop, vCenter, Dell Unity, Pure Storage và HPE Alletra từ MySQL.</p>
           </div>
-          <Button variant="ghost" onClick={() => void loadItems()}>Tải lại</Button>
+          <Button variant="ghost" onClick={() => void loadItems()} disabled={loading}>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Tải lại'}
+          </Button>
         </div>
 
         {error ? <div className="mt-4 rounded-xl border border-danger/40 bg-danger/10 p-3 text-sm text-danger">{error}</div> : null}
-        {loading ? <p className="mt-4 text-sm text-mutedFg">Đang tải dữ liệu...</p> : null}
+        {loading ? (
+          <div className="mt-4 flex items-center gap-2 text-sm text-mutedFg">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Đang tải dữ liệu...
+          </div>
+        ) : null}
 
         <div className="mt-4 overflow-hidden rounded-xl border border-border">
           <table className="w-full text-left text-sm">
@@ -202,7 +217,7 @@ export function ConfigurationsClient() {
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id} className="border-t border-border/70">
+                <tr key={item.id} className="border-t border-border/70 transition hover:bg-white/3">
                   <td className="px-4 py-4">
                     <div className="font-medium truncate">{item.name}</div>
                     <div className="text-xs text-mutedFg truncate">User: {item.username || 'Chưa có'}</div>
@@ -211,14 +226,32 @@ export function ConfigurationsClient() {
                   <td className="px-4 py-4 text-mutedFg truncate text-sm">{item.url}</td>
                   <td className="px-4 py-4">
                     <span className={item.enabled ? 'text-emerald-300 text-xs font-medium' : 'text-amber-300 text-xs font-medium'}>
-                      {item.enabled ? 'Bật' : 'Tắt'}
+                      {item.enabled ? '🟢 Bật' : '🟡 Tắt'}
                     </span>
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex flex-nowrap gap-2">
-                      <Button className="text-xs" type="button" variant="secondary" onClick={() => handleTestConnection(item.id)}>Kiểm tra</Button>
-                      <Button className="text-xs" type="button" variant="ghost" onClick={() => startEdit(item)}>Sửa</Button>
-                      <Button className="text-xs" type="button" variant="danger" onClick={() => void handleDelete(item.id)}>Xóa</Button>
+                      <Button
+                        className="text-xs"
+                        type="button"
+                        variant="secondary"
+                        onClick={() => handleTestConnection(item.id)}
+                        disabled={testing === item.id}
+                      >
+                        {testing === item.id ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Kiểm tra'}
+                      </Button>
+                      <Button className="text-xs" type="button" variant="ghost" onClick={() => startEdit(item)} disabled={testing === item.id}>
+                        Sửa
+                      </Button>
+                      <Button
+                        className="text-xs"
+                        type="button"
+                        variant="danger"
+                        onClick={() => void handleDelete(item.id)}
+                        disabled={testing === item.id}
+                      >
+                        Xóa
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -238,14 +271,16 @@ export function ConfigurationsClient() {
       </button>
 
       {formModalOpen ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-2xl border border-border bg-panel p-5 shadow-soft">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4 transition-all">
+          <div className="w-full max-w-2xl rounded-2xl border border-border bg-panel p-5 shadow-soft animate-in fade-in zoom-in-95">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h4 className="text-lg font-semibold">{editingId ? 'Chỉnh sửa cấu hình' : 'Thêm cấu hình kết nối'}</h4>
                 <p className="mt-1 text-sm text-mutedFg">Nhập thông tin kết nối cho iTop, vCenter, hoặc hệ thống lưu trữ.</p>
               </div>
-              <Button type="button" variant="ghost" onClick={closeFormModal} disabled={saving}>Đóng</Button>
+              <Button type="button" variant="ghost" onClick={closeFormModal} disabled={saving}>
+                Đóng
+              </Button>
             </div>
 
             {error ? <div className="mt-4 rounded-xl border border-danger/40 bg-danger/10 p-3 text-sm text-danger">{error}</div> : null}
@@ -271,13 +306,19 @@ export function ConfigurationsClient() {
                 <Input placeholder="Tên đăng nhập" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} />
                 <Input placeholder="Mật khẩu / token" type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
               </div>
-              <label className="flex items-center gap-2 text-sm text-mutedFg">
+              <label className="flex items-center gap-2 text-sm text-mutedFg cursor-pointer">
                 <input type="checkbox" checked={form.enabled} onChange={(event) => setForm({ ...form, enabled: event.target.checked })} />
                 Kích hoạt cấu hình
               </label>
               <div className="flex flex-wrap gap-3">
-                <Button type="button" variant="secondary" onClick={() => handleTestConnection(editingId || '')} disabled={!editingId}>Kiểm tra kết nối</Button>
-                <Button type="submit" disabled={saving || Boolean(portError)}>{saving ? 'Đang lưu...' : 'Lưu cấu hình'}</Button>
+                <Button type="button" variant="secondary" onClick={() => handleTestConnection(editingId || '')} disabled={!editingId || saving}>
+                  {testing === (editingId || '') ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Kiểm tra kết nối
+                </Button>
+                <Button type="submit" disabled={saving || Boolean(portError)}>
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {saving ? 'Đang lưu...' : 'Lưu cấu hình'}
+                </Button>
               </div>
             </form>
           </div>
@@ -286,3 +327,4 @@ export function ConfigurationsClient() {
     </div>
   );
 }
+

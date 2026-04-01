@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -47,6 +48,7 @@ export function ExceptionsClient() {
   const [items, setItems] = useState<ExceptionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formModalOpen, setFormModalOpen] = useState(false);
@@ -142,10 +144,13 @@ export function ExceptionsClient() {
   async function handleDelete(id: string) {
     if (!confirm('Xóa ngoại lệ này?')) return;
     try {
+      setDeleting(id);
       await requestJson(`/api/exceptions/${id}`, { method: 'DELETE' });
       await loadItems();
     } catch (exception) {
       setError(exception instanceof Error ? exception.message : 'Không xóa được ngoại lệ.');
+    } finally {
+      setDeleting(null);
     }
   }
 
@@ -158,13 +163,20 @@ export function ExceptionsClient() {
             <p className="text-sm text-mutedFg">Quản lý các bản ghi loại trừ khỏi danh sách sai lệch.</p>
           </div>
           <form className="flex gap-2" onSubmit={handleSearch}>
-            <Input placeholder="Tìm kiếm" value={search} onChange={(event) => setSearch(event.target.value)} />
-            <Button type="submit" variant="secondary">Lọc</Button>
+            <Input placeholder="Tìm kiếm" value={search} onChange={(event) => setSearch(event.target.value)} disabled={loading} />
+            <Button type="submit" variant="secondary" disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Lọc'}
+            </Button>
           </form>
         </div>
 
-        {error ? <div className="mt-4 rounded-xl border border-danger/40 bg-danger/10 p-3 text-sm text-danger">{error}</div> : null}
-        {loading ? <p className="mt-4 text-sm text-mutedFg">Đang tải dữ liệu...</p> : null}
+        {error ? <div className="mt-4 rounded-xl border border-danger/40 bg-danger/10 p-3 text-sm text-danger animate-in fade-in">{error}</div> : null}
+        {loading ? (
+          <div className="mt-4 flex items-center gap-2 text-sm text-mutedFg animate-in fade-in">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Đang tải dữ liệu...
+          </div>
+        ) : null}
 
         <div className="mt-4 overflow-hidden rounded-xl border border-border">
           <table className="w-full text-left text-sm">
@@ -179,7 +191,7 @@ export function ExceptionsClient() {
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id} className="border-t border-border/70">
+                <tr key={item.id} className="border-t border-border/70 transition hover:bg-white/3 animate-in fade-in">
                   <td className="px-4 py-4">
                     <div className="font-medium truncate">{item.identifier}</div>
                     <div className="text-xs text-mutedFg truncate">Người tạo: {item.createdBy}</div>
@@ -189,8 +201,18 @@ export function ExceptionsClient() {
                   <td className="px-4 py-4 truncate text-sm">{item.reason}</td>
                   <td className="px-4 py-4">
                     <div className="flex flex-nowrap gap-2">
-                      <Button className="text-xs" type="button" variant="ghost" onClick={() => startEdit(item)}>Sửa</Button>
-                      <Button className="text-xs" type="button" variant="danger" onClick={() => void handleDelete(item.id)}>Xóa</Button>
+                      <Button className="text-xs" type="button" variant="ghost" onClick={() => startEdit(item)} disabled={deleting === item.id}>
+                        Sửa
+                      </Button>
+                      <Button
+                        className="text-xs"
+                        type="button"
+                        variant="danger"
+                        onClick={() => void handleDelete(item.id)}
+                        disabled={deleting === item.id}
+                      >
+                        {deleting === item.id ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Xóa'}
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -210,14 +232,16 @@ export function ExceptionsClient() {
       </button>
 
       {formModalOpen ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-2xl border border-border bg-panel p-5 shadow-soft">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4 transition-all">
+          <div className="w-full max-w-2xl rounded-2xl border border-border bg-panel p-5 shadow-soft animate-in fade-in zoom-in-95">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h4 className="text-lg font-semibold">{editingId ? 'Chỉnh sửa ngoại lệ' : 'Thêm ngoại lệ'}</h4>
                 <p className="mt-1 text-sm text-mutedFg">Loại trừ bản ghi rác hoặc dữ liệu không cần đồng bộ.</p>
               </div>
-              <Button type="button" variant="ghost" onClick={closeFormModal} disabled={saving}>Đóng</Button>
+              <Button type="button" variant="ghost" onClick={closeFormModal} disabled={saving}>
+                Đóng
+              </Button>
             </div>
 
             {error ? <div className="mt-4 rounded-xl border border-danger/40 bg-danger/10 p-3 text-sm text-danger">{error}</div> : null}
@@ -237,7 +261,10 @@ export function ExceptionsClient() {
                 <Input placeholder="Người tạo" value={form.createdBy} onChange={(event) => setForm({ ...form, createdBy: event.target.value })} />
               </div>
               <div className="flex flex-wrap gap-3">
-                <Button type="submit" disabled={saving}>{saving ? 'Đang lưu...' : 'Lưu ngoại lệ'}</Button>
+                <Button type="submit" disabled={saving}>
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  {saving ? 'Đang lưu...' : 'Lưu ngoại lệ'}
+                </Button>
               </div>
             </form>
           </div>
@@ -246,3 +273,4 @@ export function ExceptionsClient() {
     </div>
   );
 }
+

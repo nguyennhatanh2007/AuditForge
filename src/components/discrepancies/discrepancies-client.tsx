@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -40,9 +41,16 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   return payload.data as T;
 }
 
+const severityColor = {
+  low: 'text-blue-400',
+  medium: 'text-amber-400',
+  high: 'text-red-400',
+};
+
 export function DiscrepanciesClient() {
   const [pageData, setPageData] = useState<DiscrepancyPage>({ items: [], total: 0, page: 1, pageSize: 10 });
   const [loading, setLoading] = useState(true);
+  const [addingException, setAddingException] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [objectType, setObjectType] = useState<'all' | 'vm' | 'host' | 'lun'>('all');
@@ -76,6 +84,7 @@ export function DiscrepanciesClient() {
 
   async function handleAddException(item: DiscrepancyItem) {
     try {
+      setAddingException(item.id);
       await requestJson(`/api/discrepancies/${item.id}/exception`, {
         method: 'POST',
         body: JSON.stringify({ reason: 'Đánh dấu trực tiếp từ màn hình sai lệch', createdBy: 'admin' }),
@@ -83,6 +92,8 @@ export function DiscrepanciesClient() {
       await loadItems(pageData.page);
     } catch (exception) {
       setError(exception instanceof Error ? exception.message : 'Không thể đánh dấu ngoại lệ.');
+    } finally {
+      setAddingException(null);
     }
   }
 
@@ -93,15 +104,15 @@ export function DiscrepanciesClient() {
           <h2 className="text-2xl font-semibold">Sai lệch dữ liệu</h2>
           <p className="text-sm text-mutedFg">Danh sách sai lệch được lọc theo ngoại lệ và phân trang từ MySQL.</p>
         </div>
-        <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[720px]">
-          <Input placeholder="Tìm theo định danh, nguồn hoặc mô tả" value={search} onChange={(event) => setSearch(event.target.value)} />
-          <Select value={objectType} onChange={(event) => setObjectType(event.target.value as typeof objectType)}>
+        <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[720px] transition-all">
+          <Input placeholder="Tìm theo định danh, nguồn hoặc mô tả" value={search} onChange={(event) => setSearch(event.target.value)} disabled={loading} />
+          <Select value={objectType} onChange={(event) => setObjectType(event.target.value as typeof objectType)} disabled={loading}>
             <option value="all">Tất cả loại đối tượng</option>
             <option value="vm">Máy ảo</option>
             <option value="host">Máy chủ</option>
             <option value="lun">LUN / Volume</option>
           </Select>
-          <Select value={type} onChange={(event) => setType(event.target.value as typeof type)}>
+          <Select value={type} onChange={(event) => setType(event.target.value as typeof type)} disabled={loading}>
             <option value="all">Tất cả kiểu sai lệch</option>
             <option value="missing_in_itop">Thiếu trong iTop</option>
             <option value="extra_in_itop">Thừa trong iTop</option>
@@ -116,11 +127,18 @@ export function DiscrepanciesClient() {
             <h3 className="text-base font-semibold">Danh sách sai lệch</h3>
             <p className="text-sm text-mutedFg">Danh sách full width, thao tác thêm ngoại lệ trực tiếp trên từng dòng.</p>
           </div>
-          <Button variant="ghost" onClick={() => void loadItems(pageData.page)}>Tải lại</Button>
+          <Button variant="ghost" onClick={() => void loadItems(pageData.page)} disabled={loading}>
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Tải lại'}
+          </Button>
         </div>
 
-        {error ? <div className="mt-4 rounded-xl border border-danger/40 bg-danger/10 p-3 text-sm text-danger">{error}</div> : null}
-        {loading ? <p className="mt-4 text-sm text-mutedFg">Đang tải dữ liệu...</p> : null}
+        {error ? <div className="mt-4 rounded-xl border border-danger/40 bg-danger/10 p-3 text-sm text-danger animate-in fade-in">{error}</div> : null}
+        {loading ? (
+          <div className="mt-4 flex items-center gap-2 text-sm text-mutedFg animate-in fade-in">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Đang tải dữ liệu...
+          </div>
+        ) : null}
 
         <div className="mt-4 overflow-hidden rounded-xl border border-border">
           <table className="w-full text-left text-sm">
@@ -135,18 +153,21 @@ export function DiscrepanciesClient() {
             </thead>
             <tbody>
               {pageData.items.map((item) => (
-                <tr key={item.id} className="border-t border-border/70">
+                <tr key={item.id} className="border-t border-border/70 transition hover:bg-white/3 animate-in fade-in">
                   <td className="px-4 py-4">
                     <div className="font-medium">{item.identifier}</div>
-                    <div className="text-xs text-mutedFg">{item.summary}</div>
+                    <div className="text-xs text-mutedFg truncate">{item.summary}</div>
                   </td>
-                  <td className="px-4 py-4 uppercase text-mutedFg">{item.type.replaceAll('_', ' ')}</td>
-                  <td className="px-4 py-4">{item.sourceSystem}</td>
-                  <td className="px-4 py-4">{item.severity}</td>
+                  <td className="px-4 py-4 uppercase text-mutedFg text-xs">{item.type.replaceAll('_', ' ')}</td>
+                  <td className="px-4 py-4 text-sm">{item.sourceSystem}</td>
+                  <td className={`px-4 py-4 font-medium text-sm capitalize ${severityColor[item.severity] || 'text-gray-400'}`}>
+                    {item.severity}
+                  </td>
                   <td className="px-4 py-4">
-                    <div className="flex flex-nowrap gap-2">
-                      <Button type="button" variant="secondary" onClick={() => void handleAddException(item)}>Thêm ngoại lệ</Button>
-                    </div>
+                    <Button type="button" variant="secondary" onClick={() => void handleAddException(item)} disabled={addingException === item.id}>
+                      {addingException === item.id ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                      {addingException === item.id ? 'Đang xử lý...' : 'Thêm ngoại lệ'}
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -157,8 +178,12 @@ export function DiscrepanciesClient() {
         <div className="mt-4 flex items-center justify-between gap-4 text-sm text-mutedFg">
           <span>Trang {pageData.page} / {totalPages} · Tổng {pageData.total} bản ghi</span>
           <div className="flex gap-2">
-            <Button type="button" variant="secondary" disabled={pageData.page <= 1} onClick={() => void loadItems(pageData.page - 1)}>Trước</Button>
-            <Button type="button" variant="secondary" disabled={pageData.page >= totalPages} onClick={() => void loadItems(pageData.page + 1)}>Sau</Button>
+            <Button type="button" variant="secondary" disabled={pageData.page <= 1 || loading} onClick={() => void loadItems(pageData.page - 1)}>
+              Trước
+            </Button>
+            <Button type="button" variant="secondary" disabled={pageData.page >= totalPages || loading} onClick={() => void loadItems(pageData.page + 1)}>
+              Sau
+            </Button>
           </div>
         </div>
       </Card>

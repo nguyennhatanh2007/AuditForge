@@ -1,12 +1,13 @@
 'use client';
 
-import { BarChart3, Database, FileBarChart2, ShieldAlert, Settings, RefreshCcw, LayoutDashboard } from 'lucide-react';
+import { BarChart3, Database, FileBarChart2, ShieldAlert, Settings, RefreshCcw, LayoutDashboard, HardDrive } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 const items = [
   { href: '/', label: 'Bảng điều khiển', icon: LayoutDashboard },
+  { href: '/inventory', label: 'Kho dữ liệu', icon: HardDrive },
   { href: '/discrepancies', label: 'Sai lệch dữ liệu', icon: ShieldAlert },
   { href: '/exceptions', label: 'Ngoại lệ', icon: Database },
   { href: '/sync-jobs', label: 'Lịch sử đồng bộ', icon: RefreshCcw },
