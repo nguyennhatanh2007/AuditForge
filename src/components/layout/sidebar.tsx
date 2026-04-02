@@ -19,7 +19,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-72 border-r border-border bg-[#0b1220] px-4 py-5 text-slate-100 lg:flex lg:flex-col">
+    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-72 border-r border-border bg-white px-4 py-5 text-slate-900 lg:flex lg:flex-col">
       <div className="mb-8 flex items-center gap-3 px-2">
         <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent text-accentFg shadow-soft">
           <BarChart3 className="h-5 w-5" />
@@ -39,7 +39,7 @@ export function Sidebar() {
               href={item.href}
               className={cn(
                 'flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition hover:bg-white/8',
-                active && 'bg-white/10 text-white',
+                active && 'bg-blue-50 text-blue-700',
               )}
             >
               <Icon className="h-4 w-4" />
@@ -48,7 +48,7 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="mt-auto rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">
+      <div className="mt-auto rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
         Luồng đồng bộ hiện đại, có nhận diện và bỏ qua bản ghi ngoại lệ.
       </div>
     </aside>

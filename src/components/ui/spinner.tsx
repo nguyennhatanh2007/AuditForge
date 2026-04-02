@@ -20,7 +20,7 @@ export function Spinner({ size = 'md', className }: SpinnerProps) {
 
 export function LoadingOverlay() {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/10">
       <div className="rounded-lg bg-panel p-4 shadow-lg">
         <Spinner size="lg" />
         <p className="mt-2 text-sm text-mutedFg">Đang tải...</p>

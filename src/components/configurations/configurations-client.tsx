@@ -206,7 +206,7 @@ export function ConfigurationsClient() {
 
         <div className="mt-4 overflow-hidden rounded-xl border border-border">
           <table className="w-full text-left text-sm">
-            <thead className="bg-black/15 text-mutedFg">
+            <thead className="bg-slate-50 text-slate-600">
               <tr>
                 <th className="px-4 py-3">Tên cấu hình</th>
                 <th className="px-4 py-3">Hệ thống</th>
@@ -271,7 +271,7 @@ export function ConfigurationsClient() {
       </button>
 
       {formModalOpen ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4 transition-all">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/10 p-4 transition-all">
           <div className="w-full max-w-2xl rounded-2xl border border-border bg-panel p-5 shadow-soft animate-in fade-in zoom-in-95">
             <div className="flex items-start justify-between gap-3">
               <div>

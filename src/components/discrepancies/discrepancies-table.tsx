@@ -74,7 +74,7 @@ export function DiscrepanciesTable({
     <Card className="border-border/70 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-black/10 border-b border-border/70">
+          <thead className="bg-slate-50 border-b border-border/70">
             <tr>
               <th className="px-4 py-3 text-left text-mutedFg font-semibold">{icon} Tên</th>
               <th className="px-4 py-3 text-left text-mutedFg font-semibold">Loại Sai Lệch</th>
@@ -86,7 +86,7 @@ export function DiscrepanciesTable({
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr key={item.id} className={`border-b border-border/30 hover:bg-black/3 transition ${getDiscrepancyColor(item.severity)}`}>
+              <tr key={item.id} className={`border-b border-border/30 hover:bg-slate-100 transition ${getDiscrepancyColor(item.severity)}`}>
                 {/* Tên */}
                 <td className="px-4 py-3 font-semibold text-slate-900">
                   <div className="truncate max-w-xs">{item.identifier}</div>
@@ -97,7 +97,7 @@ export function DiscrepanciesTable({
 
                 {/* Loại Sai Lệch */}
                 <td className="px-4 py-3">
-                  <div className="inline-block px-2 py-1 bg-black/5 rounded text-xs font-medium">
+                  <div className="inline-block px-2 py-1 bg-slate-100 rounded text-xs font-medium">
                     {typeLabel[item.type]}
                   </div>
                 </td>

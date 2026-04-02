@@ -137,7 +137,7 @@ export function SyncDataTable() {
         <Card>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-black/15">
+              <thead className="bg-slate-50">
                 <tr className="border-b border-border/70">
                   <th className="px-4 py-3 text-left text-mutedFg font-medium">Job ID</th>
                   <th className="px-4 py-3 text-left text-mutedFg font-medium">Thời Gian</th>
@@ -150,7 +150,7 @@ export function SyncDataTable() {
               </thead>
               <tbody>
                 {syncJobs.map((job) => (
-                  <tr key={job.id} className="border-b border-border/70 hover:bg-white/3 transition">
+                  <tr key={job.id} className="border-b border-border/70 hover:bg-slate-100 transition">
                     <td className="px-4 py-3 font-medium">#{job.id}</td>
                     <td className="px-4 py-3">
                       {hydrated ? (
@@ -192,7 +192,7 @@ export function SyncDataTable() {
           </div>
 
           {syncJobs.length > 0 && (
-            <div className="border-t border-border/70 px-4 py-3 bg-black/5 text-sm text-mutedFg">
+            <div className="border-t border-border/70 px-4 py-3 bg-slate-50 text-sm text-mutedFg">
               Hiển thị {syncJobs.length} sync jobs gần đây · Cập nhật tự động mỗi 30 giây
             </div>
           )}

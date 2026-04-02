@@ -86,7 +86,7 @@ export default async function DashboardPage() {
           </div>
           <div className="mt-3 space-y-2 text-xs">
             {liveSystemConfigs.map((item) => (
-              <div key={item.id} className="flex items-center justify-between rounded-lg border border-border/50 bg-black/10 px-3 py-2">
+              <div key={item.id} className="flex items-center justify-between rounded-lg border border-border/50 bg-slate-50 px-3 py-2">
                 <div className="min-w-0 truncate">
                   <span className="font-medium">{item.name}</span>
                   <span className="text-mutedFg"> · {item.systemType.toUpperCase()}</span>

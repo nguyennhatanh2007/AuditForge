@@ -69,7 +69,7 @@ export function DiscrepanciesVMTable({
     <Card className="border-border/70 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-black/10 border-b border-border/70">
+          <thead className="bg-slate-50 border-b border-border/70">
             <tr>
               <th className="px-4 py-3 text-left text-mutedFg font-semibold">☁️ Tên Máy Ảo</th>
               <th className="px-4 py-3 text-left text-mutedFg font-semibold">Loại Sai Lệch</th>
@@ -79,7 +79,7 @@ export function DiscrepanciesVMTable({
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr key={item.id} className="border-b border-border/30 hover:bg-black/3 transition">
+              <tr key={item.id} className="border-b border-border/30 hover:bg-slate-100 transition">
                 {/* Tên Máy Ảo */}
                 <td className="px-4 py-3 font-semibold">
                   <div className="flex items-center gap-2">
@@ -95,7 +95,7 @@ export function DiscrepanciesVMTable({
 
                 {/* Loại Sai Lệch */}
                 <td className="px-4 py-3">
-                  <div className="inline-block px-2 py-1 bg-black/5 rounded text-xs font-medium whitespace-nowrap">
+                  <div className="inline-block px-2 py-1 bg-slate-100 rounded text-xs font-medium whitespace-nowrap">
                     {typeLabel[item.type]}
                   </div>
                 </td>

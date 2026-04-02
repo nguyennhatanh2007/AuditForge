@@ -388,7 +388,7 @@ export function ConnectionsClient() {
 
         <div className="mt-4 space-y-3">
           {items.map((item) => (
-            <div key={item.id} className="rounded-xl border border-border bg-black/10 p-4">
+            <div key={item.id} className="rounded-xl border border-border bg-slate-50 p-4">
               <div className="flex flex-col gap-3 lg:flex-row lg:flex-nowrap lg:items-center lg:justify-between">
                 <div className="min-w-0">
                   <div className="truncate font-medium">{item.name}</div>
@@ -418,7 +418,7 @@ export function ConnectionsClient() {
       </button>
 
       {formModalOpen ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/10 p-4">
           <div className="w-full max-w-2xl rounded-2xl border border-border bg-panel p-5 shadow-soft">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -471,7 +471,7 @@ export function ConnectionsClient() {
       ) : null}
 
       {testModal.open ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/10 p-4">
           <div className="w-full max-w-xl rounded-2xl border border-border bg-panel p-5 shadow-soft">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -489,7 +489,7 @@ export function ConnectionsClient() {
             </div>
 
             {testModal.running ? (
-              <div className="mt-4 rounded-xl border border-border bg-black/10 p-3 text-sm text-mutedFg">
+              <div className="mt-4 rounded-xl border border-border bg-slate-50 p-3 text-sm text-mutedFg">
                 Đang mở kết nối và chờ phản hồi từ endpoint. Vui lòng đợi...
                 <div className="mt-3">
                   <Button type="button" variant="danger" onClick={handleCancelRunningTest}>Hủy kiểm tra</Button>
@@ -498,7 +498,7 @@ export function ConnectionsClient() {
             ) : null}
 
             {testModal.result ? (
-              <div className="mt-4 space-y-2 rounded-xl border border-border bg-black/10 p-4 text-sm">
+                <div className="mt-4 space-y-2 rounded-xl border border-border bg-slate-50 p-4 text-sm">
                 <div className="font-medium">{testModal.result.message}</div>
                 <div className="text-mutedFg">Chi tiết: {testModal.result.details}</div>
                 <div className="text-mutedFg">URL kiểm tra: {testModal.result.checkedUrl}</div>

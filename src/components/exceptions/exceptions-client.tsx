@@ -180,7 +180,7 @@ export function ExceptionsClient() {
 
         <div className="mt-4 overflow-hidden rounded-xl border border-border">
           <table className="w-full text-left text-sm">
-            <thead className="bg-black/15 text-mutedFg">
+            <thead className="bg-slate-50 text-slate-600">
               <tr>
                 <th className="px-4 py-3">Định danh</th>
                 <th className="px-4 py-3">Loại</th>
@@ -191,7 +191,7 @@ export function ExceptionsClient() {
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id} className="border-t border-border/70 transition hover:bg-white/3 animate-in fade-in">
+                <tr key={item.id} className="border-t border-border/70 transition hover:bg-slate-100 animate-in fade-in">
                   <td className="px-4 py-4">
                     <div className="font-medium truncate">{item.identifier}</div>
                     <div className="text-xs text-mutedFg truncate">Người tạo: {item.createdBy}</div>
@@ -232,7 +232,7 @@ export function ExceptionsClient() {
       </button>
 
       {formModalOpen ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4 transition-all">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-900/10 p-4 transition-all">
           <div className="w-full max-w-2xl rounded-2xl border border-border bg-panel p-5 shadow-soft animate-in fade-in zoom-in-95">
             <div className="flex items-start justify-between gap-3">
               <div>
