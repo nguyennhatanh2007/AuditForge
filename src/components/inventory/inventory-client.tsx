@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, Server, Database, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useInventory } from '@/lib/hooks/useInventory';
@@ -15,150 +15,225 @@ type SystemStats = {
 export function InvenuoryClient() {
   const { loading, error, data, fetchInventory, syncSystem, reset } = useInventory();
   const [selectedSystem, setSelectedSystem] = useState<string | null>(null);
-  const [stats, setStats] = useState<SystemStats[]>([]);
-  const [syncingSystem, setSyncingSystem] = useState<string | null>(null);
+  const [selectedDataType, setSelectedDataType] = useState<string | null>(null);
 
   useEffect(() => {
     void fetchInventory();
   }, [fetchInventory]);
 
-  useEffect(() => {
-    if (data) {
-      const newStats: SystemStats[] = [];
-      for (const [systemType, systemData] of Object.entries(data)) {
-        let itemCount = 0;
-        if (Array.isArray(systemData)) {
-          itemCount = systemData.length;
-        } else if (typeof systemData === 'object' && systemData !== null) {
-          itemCount = Object.values(systemData as Record<string, unknown[]>)
-            .reduce((sum, arr) => sum + (Array.isArray(arr) ? arr.length : 0), 0);
-        }
-        newStats.push({
-          systemType,
-          itemCount,
-          lastFetch: new Date().toLocaleString(),
-        });
-      }
-      setStats(newStats);
-    }
-  }, [data]);
-
-  async function handleSyncSystem(systemType: string) {
-    setSyncingSystem(systemType);
-    try {
-      await syncSystem(systemType);
-    } finally {
-      setSyncingSystem(null);
-    }
-  }
-
   const systemName: Record<string, string> = {
-    vcenter: 'VMware vCenter',
-    itop: 'iTop CMDB',
-    unity: 'Dell Unity',
-    pure: 'Pure Storage',
-    alletra: 'HPE Alletra',
+    vcenter: '🖥️ VMware vCenter/ESXi',
+    itop: '📋 iTOP CMDB',
+    unity: '💾 Dell Unity',
+    pure: '💾 Pure Storage',
+    alletra: '💾 HPE Alletra',
+  };
+
+  const systemIcon: Record<string, any> = {
+    vcenter: <Server className="h-5 w-5 text-blue-600" />,
+    itop: <Database className="h-5 w-5 text-purple-600" />,
+    unity: <Database className="h-5 w-5 text-gray-600" />,
+    pure: <Database className="h-5 w-5 text-orange-600" />,
+    alletra: <Database className="h-5 w-5 text-green-600" />,
+  };
+
+  const getDataTypeLabel = (key: string) => {
+    const labels: Record<string, string> = {
+      virtualMachines: '☁️ Máy Ảo',
+      servers: '🖥️ Máy Chủ',
+      hosts: '🖥️ ESXi Hosts',
+      datastores: '💾 Kho Dữ Liệu',
+      logicalVolumes: '💾 Ổ Đĩa Logic',
+    };
+    return labels[key] || key;
   };
 
   return (
     <div className="space-y-6">
-      {/* Overview Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {stats.map((stat) => (
-          <Card key={stat.systemType} className="relative overflow-hidden">
-            <div className="space-y-2">
-              <div className="text-sm font-semibold text-mutedFg">{systemName[stat.systemType] || stat.systemType}</div>
-              <div className="text-3xl font-bold">{stat.itemCount}</div>
-              <div className="text-xs text-mutedFg truncate">{stat.lastFetch}</div>
-            </div>
-            <Button
-              className="absolute top-2 right-2 h-8 w-8 p-0"
-              variant="ghost"
-              onClick={() => void handleSyncSystem(stat.systemType)}
-              disabled={syncingSystem === stat.systemType}
-              title={`Đồng bộ ${systemName[stat.systemType]}`}
-            >
-              {syncingSystem === stat.systemType ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <RefreshCw className="h-4 w-4" />
-              )}
-            </Button>
-          </Card>
-        ))}
+      {/* Header */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold">📦 Kho Dữ Liệu Hệ Thống</h2>
+          <p className="text-sm text-slate-600">
+            Xem dữ liệu thô (Inventory) từ tất cả các hệ thống kết nối. Đây là danh sách đầu đủ của các đối tượng từ mỗi nguồn.
+          </p>
+        </div>
+        <Button variant="ghost" onClick={() => void fetchInventory()} disabled={loading}>
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+          Tải lại
+        </Button>
       </div>
 
       {/* Error Display */}
       {error ? (
-        <div className="rounded-xl border border-danger/40 bg-danger/10 p-4 text-sm text-danger animate-in fade-in">
-          <p className="font-semibold">Lỗi tải dữ liệu</p>
-          <p className="mt-1">{error}</p>
-          <Button className="mt-3" variant="secondary" onClick={() => void fetchInventory()}>
-            Thử lại
-          </Button>
+        <div className="rounded-lg border border-red-400/30 bg-red-50 p-4 text-sm text-red-700 animate-in fade-in">
+          <div className="flex gap-2">
+            <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold">Lỗi tải dữ liệu</p>
+              <p className="mt-1">{error}</p>
+              <Button className="mt-3" variant="secondary" onClick={() => void fetchInventory()}>
+                Thử lại
+              </Button>
+            </div>
+          </div>
         </div>
       ) : null}
 
       {/* Loading State */}
       {loading ? (
-        <div className="flex items-center justify-center gap-3 rounded-xl border border-border bg-black/20 py-12 animate-in fade-in">
-          <Loader2 className="h-6 w-6 animate-spin text-accent" />
-          <span className="text-mutedFg">Đang tải dữ liệu từ các hệ thống...</span>
-        </div>
-      ) : null}
-
-      {/* System Data Display */}
-      {!loading && data ? (
-        <Card>
-          <div className="flex items-center justify-between gap-4 mb-4">
-            <div>
-              <h3 className="text-base font-semibold">Chi tiết hệ thống</h3>
-              <p className="text-sm text-mutedFg">Chọn hệ thống để xem chi tiết dữ liệu đã đồng bộ.</p>
-            </div>
-            <Button variant="ghost" onClick={() => void fetchInventory()} disabled={loading}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Tải lại'}
-            </Button>
+        <Card className="py-12">
+          <div className="flex items-center justify-center gap-3">
+            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+            <span className="text-slate-600">Đang tải dữ liệu từ các hệ thống...</span>
           </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            {stats.map((stat) => (
-              <button
-                key={stat.systemType}
-                onClick={() => setSelectedSystem(stat.systemType)}
-                className={`rounded-lg border-2 p-3 text-left transition ${
-                  selectedSystem === stat.systemType
-                    ? 'border-accent bg-accent/10 text-white'
-                    : 'border-border bg-black/20 text-mutedFg hover:bg-black/30'
-                }`}
-              >
-                <div className="text-sm font-semibold">{systemName[stat.systemType]}</div>
-                <div className="mt-1 text-2xl font-bold">{stat.itemCount}</div>
-                <div className="mt-2 text-xs opacity-70">Nhấp để xem chi tiết</div>
-              </button>
-            ))}
-          </div>
-
-          {selectedSystem && data[selectedSystem] ? (
-            <div className="mt-6 space-y-4">
-              <div>
-                <h4 className="font-semibold mb-3">{systemName[selectedSystem]} - Chi tiết dữ liệu</h4>
-                <div className="rounded-lg bg-black/30 p-4 overflow-auto max-h-96">
-                  <pre className="text-xs text-mutedFg font-mono whitespace-pre-wrap break-words">
-                    {JSON.stringify(data[selectedSystem], null, 2)}
-                  </pre>
-                </div>
-              </div>
-            </div>
-          ) : null}
         </Card>
       ) : null}
 
-      {/* Empty State */}
-      {!loading && !data ? (
-        <div className="rounded-xl border border-dashed border-border/50 bg-black/20 p-8 text-center">
-          <p className="text-mutedFg">Không có dữ liệu. Nhấp vào nút &quot;Tải lại&quot; để lấy dữ liệu từ các hệ thống.</p>
-        </div>
+      {/* Systems Overview */}
+      {!loading && data && Object.keys(data).length > 0 ? (
+        <>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {Object.entries(data).map(([systemType, systemData]: [string, any]) => {
+              let totalItems = 0;
+              if (systemData.data) {
+                Object.values(systemData.data).forEach((category: any) => {
+                  if (category.count) totalItems += category.count;
+                });
+              }
+
+              return (
+                <Card
+                  key={systemType}
+                  className={`p-4 cursor-pointer transition ${ selectedSystem === systemType ? 'border-blue-500 bg-blue-50' : 'hover:border-blue-300'}`}
+                  onClick={() => setSelectedSystem(systemType)}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex gap-3">
+                      {systemIcon[systemType]}
+                      <div>
+                        <div className="font-semibold text-slate-900">{systemName[systemType] || systemType}</div>
+                        <div className="text-xs text-slate-500 mt-0.5">{systemData.url || 'N/A'}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 text-2xl font-bold text-blue-600">{totalItems}</div>
+                  <div className="text-xs text-slate-500">
+                    {systemData.lastFetch ? new Date(systemData.lastFetch).toLocaleString('vi-VN') : 'N/A'}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Selected System Details */}
+          {selectedSystem && data[selectedSystem] ? (
+            <Card>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">{systemName[selectedSystem]}</h3>
+                </div>
+
+                {/* Data Type Tabs */}
+                <div className="flex gap-2 border-b border-slate-200 overflow-x-auto">
+                  {data[selectedSystem].data ? (
+                    Object.entries(data[selectedSystem].data).map(([dataType]: [string, any]) => (
+                      <button
+                        key={dataType}
+                        onClick={() => setSelectedDataType(dataType)}
+                        className={`px-3 py-2 text-sm font-medium border-b-2 transition ${ selectedDataType === dataType
+                          ? 'border-blue-600 text-blue-600'
+                          : 'border-transparent text-slate-600 hover:text-slate-900'}`}
+                      >
+                        {getDataTypeLabel(dataType)}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="text-sm text-slate-500">Không có dữ liệu</div>
+                  )}
+                </div>
+
+                {/* Data Display */}
+                {selectedDataType && data[selectedSystem].data?.[selectedDataType] ? (
+                  <div className="space-y-3">
+                    <div className="text-sm text-slate-600">
+                      Tổng: <span className="font-semibold">{data[selectedSystem].data[selectedDataType].count}</span> mục
+                    </div>
+
+                    {/* Table */}
+                    {data[selectedSystem].data[selectedDataType].items?.length > 0 ? (
+                      <div className="overflow-x-auto border border-slate-200 rounded-lg">
+                        <table className="w-full text-sm">
+                          <thead className="bg-slate-100 border-b border-slate-200">
+                            <tr>
+                              <th className="px-4 py-2 text-left font-semibold text-slate-900">Tên</th>
+                              <th className="px-4 py-2 text-left font-semibold text-slate-900">ID</th>
+                              {/* Dynamic columns */}
+                              {data[selectedSystem].data[selectedDataType].items[0] && (
+                                Object.keys(data[selectedSystem].data[selectedDataType].items[0])
+                                  .filter((k) => k !== 'name' && k !== 'id')
+                                  .slice(0, 4)
+                                  .map((key) => (
+                                    <th key={key} className="px-4 py-2 text-left font-semibold text-slate-900 capitalize">
+                                      {key.replace(/([A-Z])/g, ' $1').trim()}
+                                    </th>
+                                  ))
+                              )}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {data[selectedSystem].data[selectedDataType].items.map((item: any, idx: number) => (
+                              <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
+                                <td className="px-4 py-2 font-medium text-blue-700">{item.name}</td>
+                                <td className="px-4 py-2 text-xs text-slate-500 font-mono">{item.id}</td>
+                                {Object.entries(item)
+                                  .filter(([k]) => k !== 'name' && k !== 'id')
+                                  .slice(0, 4)
+                                  .map(([key, value]) => (
+                                    <td key={key} className="px-4 py-2 text-slate-600">
+                                      {String(value)}
+                                    </td>
+                                  ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-sm text-slate-500 text-center py-4">Không có mục nào</div>
+                    )}
+                  </div>
+                ) : !selectedDataType ? (
+                  <div className="text-sm text-slate-500 text-center py-4">Chọn một loại dữ liệu để xem</div>
+                ) : (
+                  <div className="text-sm text-slate-500 text-center py-4">Không có dữ liệu</div>
+                )}
+              </div>
+            </Card>
+          ) : null}
+        </>
+      ) : !loading ? (
+        <Card className="py-8 text-center">
+          <p className="text-slate-600">Không có hệ thống nào được kết nối. Hãy cấu hình kết nối trong trang Cấu hình.</p>
+        </Card>
       ) : null}
+
+      {/* Info Card */}
+      <Card className="bg-blue-50 border-blue-200">
+        <div className="space-y-2">
+          <h4 className="font-semibold text-blue-900">ℹ️ Kho dữ liệu là gì?</h4>
+          <p className="text-sm text-blue-800">
+            <strong>Kho dữ liệu</strong> hiển thị danh sách đầy đủ của tất cả các đối tượng từ mỗi hệ thống kết nối:
+          </p>
+          <ul className="text-sm text-blue-800 space-y-1 ml-4">
+            <li>✓ <strong>iTOP</strong>: Máy ảo, Máy chủ, Ổ đĩa logic</li>
+            <li>✓ <strong>vCenter/ESXi</strong>: VMs, ESXi Hosts, Datastores</li>
+          </ul>
+          <p className="text-sm text-blue-800 mt-2">
+            Đây là dữ liệu "thô" từ các nguồn, được sử dụng để <strong>phát hiện sai lệch</strong> khi so sánh giữa các hệ thống.
+          </p>
+        </div>
+      </Card>
     </div>
   );
 }

@@ -2,14 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { VcenterService } from '@/services/vcenter.service';
 import { ItopService } from '@/services/itop.service';
-import { UnityService } from '@/services/unity.service';
-import { PureService } from '@/services/pure.service';
-import { AlletraService } from '@/services/alletra.service';
+import { decryptSecret } from '@/lib/crypto';
 
 export async function GET(request: NextRequest) {
   try {
     const systemType = request.nextUrl.searchParams.get('systemType');
-    
+
     if (!systemType) {
       // Fetch from all enabled systems
       return await fetchAllSystems();
@@ -38,14 +36,22 @@ async function fetchAllSystems() {
   for (const config of configs) {
     try {
       const data = await getSystemData(config);
-      results[config.systemType] = data;
+      results[config.system_type] = data;
     } catch (error) {
-      console.error(`Failed to fetch from ${config.systemType}:`, error);
-      results[config.systemType] = [];
+      console.error(`Failed to fetch from ${config.system_type}:`, error);
+      results[config.system_type] = {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        system: config.system_type,
+        lastFetch: new Date().toISOString(),
+      };
     }
   }
 
-  return NextResponse.json({ data: results });
+  return NextResponse.json({
+    data: results,
+    timestamp: new Date().toISOString(),
+    totalSystems: Object.keys(results).length,
+  });
 }
 
 async function fetchSystemInventory(systemType: string) {
@@ -56,7 +62,7 @@ async function fetchSystemInventory(systemType: string) {
 
   const config = await db('configurations')
     .select('*')
-    .where('systemType', systemType)
+    .where('system_type', systemType)
     .where('enabled', true)
     .first();
 
@@ -69,95 +75,127 @@ async function fetchSystemInventory(systemType: string) {
 }
 
 async function getSystemData(config: any) {
-  switch (config.systemType) {
+  switch (config.system_type) {
     case 'vcenter':
       return await getVcenterData(config);
     case 'itop':
       return await getItopData(config);
-    case 'unity':
-      return await getUnityData(config);
-    case 'pure':
-      return await getPureData(config);
-    case 'alletra':
-      return await getAlletraData(config);
     default:
-      return [];
+      return {
+        error: `System type ${config.system_type} not supported in inventory`,
+        system: config.system_type,
+      };
   }
 }
 
 async function getVcenterData(config: any) {
   try {
-    const service = new VcenterService(config.url, config.username, config.password);
+    const password = decryptSecret(config.encrypted_password);
+    const service = new VcenterService(config.url, config.username, password);
+
     const [vms, hosts, datastores] = await Promise.all([
-      service.fetchInventory(),
-      service.fetchHosts(),
-      service.fetchDatastores(),
+      service.fetchInventory().catch(() => []),
+      service.fetchHosts().catch(() => []),
+      service.fetchDatastores().catch(() => []),
     ]);
-    return { vms, hosts, datastores };
+
+    return {
+      system: 'vCenter/ESXi',
+      url: config.url,
+      lastFetch: new Date().toISOString(),
+      data: {
+        virtualMachines: {
+          count: vms.length,
+          items: vms.map((vm: any) => ({
+            name: vm.name || 'Unknown',
+            id: vm.moid || vm.config?.uuid || '-',
+            ram: vm.memory_mb ? `${vm.memory_mb}MB` : '-',
+            cpus: vm.cpu_count || 0,
+            disk: vm.disk_gb ? `${vm.disk_gb}GB` : '-',
+            powerState: vm.power_state || '-',
+          })),
+        },
+        hosts: {
+          count: hosts.length,
+          items: hosts.map((host: any) => ({
+            name: host.name || 'Unknown',
+            id: host.moid || '-',
+            cpus: host.cpu_count || 0,
+            ram: host.memory_mb ? `${host.memory_mb}MB` : '-',
+            connectionState: host.connection_state || '-',
+          })),
+        },
+        datastores: {
+          count: datastores.length,
+          items: datastores.map((ds: any) => ({
+            name: ds.name || 'Unknown',
+            id: ds.moid || '-',
+            capacity: ds.capacity_mb ? `${ds.capacity_mb}MB` : '-',
+            freeSpace: ds.free_space_mb ? `${ds.free_space_mb}MB` : '-',
+            type: ds.type || '-',
+          })),
+        },
+      },
+    };
   } catch (error) {
     console.error('vCenter fetch error:', error);
-    return [];
+    throw error;
   }
 }
 
 async function getItopData(config: any) {
   try {
-    const service = new ItopService(config.url, config.username, config.password);
-    const [servers, cis] = await Promise.all([
-      service.fetchServers(),
-      service.fetchCIs(),
-    ]);
-    return { servers, cis };
-  } catch (error) {
-    console.error('iTop fetch error:', error);
-    return [];
-  }
-}
+    const password = decryptSecret(config.encrypted_password);
+    const service = new ItopService(config.url, config.username, password);
 
-async function getUnityData(config: any) {
-  try {
-    const service = new UnityService(config.url, config.username, config.password);
-    const [systems, pools, luns] = await Promise.all([
-      service.fetchSystems(),
-      service.fetchPools(),
-      service.fetchLUNs(),
+    const [vms, servers, volumes] = await Promise.all([
+      service.fetchVirtualMachines().catch(() => []),
+      service.fetchServers().catch(() => []),
+      service.fetchLogicalVolumes().catch(() => []),
     ]);
-    return { systems, pools, luns };
-  } catch (error) {
-    console.error('Unity fetch error:', error);
-    return [];
-  }
-}
 
-async function getPureData(config: any) {
-  try {
-    const service = new PureService(config.url, config.password);
-    const [arrays, volumes, hosts, volumeGroups] = await Promise.all([
-      service.fetchArrays(),
-      service.fetchVolumes(),
-      service.fetchHosts(),
-      service.fetchVolumeGroups(),
-    ]);
-    return { arrays, volumes, hosts, volumeGroups };
+    return {
+      system: 'iTOP CMDB',
+      url: config.url,
+      lastFetch: new Date().toISOString(),
+      data: {
+        virtualMachines: {
+          count: vms.length,
+          items: vms.map((vm: any) => ({
+            name: vm.fields?.name || 'Unknown',
+            id: vm.key || '-',
+            ram: vm.fields?.ram ? `${vm.fields.ram}MB` : '-',
+            cpus: vm.fields?.cpus || 0,
+            disk: vm.fields?.disk ? `${vm.fields.disk}GB` : '-',
+            description: vm.fields?.description || '',
+          })),
+        },
+        servers: {
+          count: servers.length,
+          items: servers.map((srv: any) => ({
+            name: srv.fields?.name || 'Unknown',
+            id: srv.key || '-',
+            osType: srv.fields?.os_type || '-',
+            ram: srv.fields?.ram ? `${srv.fields.ram}MB` : '-',
+            cpus: srv.fields?.cpus || 0,
+            description: srv.fields?.description || '',
+          })),
+        },
+        logicalVolumes: {
+          count: volumes.length,
+          items: volumes.map((vol: any) => ({
+            name: vol.fields?.name || 'Unknown',
+            id: vol.key || '-',
+            size: vol.fields?.size ? `${vol.fields.size}GB` : '-',
+            type: vol.fields?.type || '-',
+            status: vol.fields?.status || '-',
+          })),
+        },
+      },
+    };
   } catch (error) {
-    console.error('Pure Storage fetch error:', error);
-    return [];
-  }
-}
-
-async function getAlletraData(config: any) {
-  try {
-    const service = new AlletraService(config.url, config.username, config.password);
-    const [systems, volumes, arrays, pools] = await Promise.all([
-      service.fetchSystems(),
-      service.fetchVolumes(),
-      service.fetchArrays(),
-      service.fetchPools(),
-    ]);
-    return { systems, volumes, arrays, pools };
-  } catch (error) {
-    console.error('Alletra fetch error:', error);
-    return [];
+    console.error('iTOP fetch error:', error);
+    throw error;
   }
 }
 
