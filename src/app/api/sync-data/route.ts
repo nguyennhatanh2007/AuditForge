@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
     }
 
-    const config = await db('configurations')
+    const config = await db('system_configs')
       .select('*')
       .where('systemType', systemType)
       .where('enabled', true)

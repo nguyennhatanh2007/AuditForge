@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     }
 
     // Get configurations from database
-    const configs = await db('configurations')
+    const configs = await db('system_configs')
       .select('*')
       .where('enabled', true);
 

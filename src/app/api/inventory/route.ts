@@ -27,7 +27,7 @@ async function fetchAllSystems() {
     return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
   }
 
-  const configs = await db('configurations')
+  const configs = await db('system_configs')
     .select('*')
     .where('enabled', true);
 
@@ -60,7 +60,7 @@ async function fetchSystemInventory(systemType: string) {
     return NextResponse.json({ error: 'Database connection failed' }, { status: 500 });
   }
 
-  const config = await db('configurations')
+  const config = await db('system_configs')
     .select('*')
     .where('system_type', systemType)
     .where('enabled', true)
