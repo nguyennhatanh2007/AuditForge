@@ -3,6 +3,7 @@ import { getDb } from '@/lib/db';
 import { VcenterService } from '@/services/vcenter.service';
 import { ItopService } from '@/services/itop.service';
 import { decryptSecret } from '@/lib/crypto';
+import { getFriendlyErrorMessage } from '@/lib/friendly-error';
 
 interface DiscrepancyRecord {
   objectType: 'vm' | 'host' | 'lun';
@@ -22,8 +23,14 @@ interface SystemData {
   error?: string;
 }
 
+interface SyncLiveRequestBody {
+  applyItopUpdates?: boolean;
+}
+
 export async function POST(request: Request) {
   try {
+    const body = (await request.json().catch(() => ({}))) as SyncLiveRequestBody;
+    const applyItopUpdates = Boolean(body.applyItopUpdates);
     console.log('🔄 Starting real-time sync process...\n');
 
     const db = getDb();
@@ -310,6 +317,14 @@ export async function POST(request: Request) {
       console.log(`📝 ${discrepancyRecords.length} discrepancies saved\n`);
     }
 
+    const itopUpdates = applyItopUpdates ? await updateItopFromSources(systemDataMap) : {
+      attempted: 0,
+      updated: 0,
+      skipped: 0,
+      failed: 0,
+      details: [] as Array<{ identifier: string; message: string }>,
+    };
+
     // Return results with database sync info
     return NextResponse.json({
       ok: true,
@@ -317,6 +332,7 @@ export async function POST(request: Request) {
         syncJobId: syncJobId[0],
         systems: Object.keys(systemDataMap),
         discrepancies,
+        itopUpdates,
         vmComparison: {
           itopVMs: vmDataMap.itop.size,
           esxiVMs: vmDataMap.esxi.size,
@@ -328,7 +344,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Sync error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Sync failed' },
+      { error: getFriendlyErrorMessage(error, 'Đồng bộ thất bại. Vui lòng thử lại hoặc kiểm tra kết nối hệ thống.') },
       { status: 500 }
     );
   }
@@ -394,5 +410,135 @@ async function fetchVcenterData(config: any) {
     const errMsg = error instanceof Error ? error.message : String(error);
     console.error(`   ❌ vCenter Error: ${errMsg}`);
     throw new Error(`vCenter fetch failed: ${errMsg}`);
+  }
+}
+
+async function updateItopFromSources(systemDataMap: Record<string, any>) {
+  try {
+    const db = getDb();
+    if (!db) {
+      return {
+        attempted: 0,
+        updated: 0,
+        skipped: 0,
+        failed: 1,
+        details: [{ identifier: 'database', message: 'Không thể cập nhật iTop vì kết nối cơ sở dữ liệu chưa sẵn sàng.' }],
+      };
+    }
+
+    const config = await db('system_configs')
+      .select('*')
+      .where('system_type', 'itop')
+      .where('enabled', true)
+      .first();
+
+    if (!config) {
+      return {
+        attempted: 0,
+        updated: 0,
+        skipped: 0,
+        failed: 1,
+        details: [{ identifier: 'itop', message: 'Không tìm thấy cấu hình iTop đang bật để thực hiện cập nhật.' }],
+      };
+    }
+
+    const password = decryptSecret(config.encrypted_password);
+    const service = new ItopService(config.url, config.username, password);
+
+    const vcenterData = systemDataMap.vcenter;
+    const itopData = systemDataMap.itop;
+
+    const itopVmIndex = new Map<string, any>();
+    for (const vm of itopData?.vms ?? []) {
+      const identifier = vm.fields?.name || vm.name;
+      if (identifier) {
+        itopVmIndex.set(String(identifier).toLowerCase(), vm);
+      }
+    }
+
+    const itopVolumeIndex = new Map<string, any>();
+    for (const volume of itopData?.volumes ?? []) {
+      const identifier = volume.fields?.name || volume.name;
+      if (identifier) {
+        itopVolumeIndex.set(String(identifier).toLowerCase(), volume);
+      }
+    }
+
+    const details: Array<{ identifier: string; message: string }> = [];
+    let attempted = 0;
+    let updated = 0;
+    let skipped = 0;
+    let failed = 0;
+
+    for (const vm of vcenterData?.vms ?? []) {
+      const identifier = String(vm.name || vm.config?.name || '').trim();
+      if (!identifier) {
+        skipped += 1;
+        continue;
+      }
+
+      const itopVm = itopVmIndex.get(identifier.toLowerCase());
+      if (!itopVm?.key) {
+        skipped += 1;
+        details.push({ identifier, message: 'Bỏ qua vì chưa tìm thấy VM tương ứng trong iTop.' });
+        continue;
+      }
+
+      const fields = {
+        ram: vm.memory_mb ? String(vm.memory_mb) : undefined,
+        cpus: vm.cpu_count ? String(vm.cpu_count) : undefined,
+        disk: vm.disk_gb ? String(vm.disk_gb) : undefined,
+      };
+
+      attempted += 1;
+      try {
+        await service.updateVirtualMachine(itopVm.key, fields);
+        updated += 1;
+        details.push({ identifier, message: 'Đã cập nhật VM trên iTop bằng dữ liệu nguồn mới nhất.' });
+      } catch (error) {
+        failed += 1;
+        details.push({ identifier, message: getFriendlyErrorMessage(error, 'Không thể cập nhật VM này trên iTop.') });
+      }
+    }
+
+    for (const volume of vcenterData?.datastores ?? []) {
+      const identifier = String(volume.name || volume.id || '').trim();
+      if (!identifier) {
+        skipped += 1;
+        continue;
+      }
+
+      const itopVolume = itopVolumeIndex.get(identifier.toLowerCase());
+      if (!itopVolume?.key) {
+        skipped += 1;
+        details.push({ identifier, message: 'Bỏ qua vì chưa tìm thấy LogicalVolume tương ứng trong iTop.' });
+        continue;
+      }
+
+      const fields = {
+        size: volume.capacity_mb ? String(volume.capacity_mb) : undefined,
+        type: volume.type ? String(volume.type) : undefined,
+      };
+
+      attempted += 1;
+      try {
+        await service.updateLogicalVolume(itopVolume.key, fields);
+        updated += 1;
+        details.push({ identifier, message: 'Đã cập nhật LogicalVolume trên iTop bằng dữ liệu nguồn mới nhất.' });
+      } catch (error) {
+        failed += 1;
+        details.push({ identifier, message: getFriendlyErrorMessage(error, 'Không thể cập nhật LogicalVolume này trên iTop.') });
+      }
+    }
+
+    return { attempted, updated, skipped, failed, details };
+  } catch (error) {
+    return {
+      attempted: 0,
+      updated: 0,
+      skipped: 0,
+      failed: 1,
+      details: [{ identifier: 'itop-update', message: getFriendlyErrorMessage(error, 'Không thể hoàn tất cập nhật iTop.') }],
+    };
   }
 }

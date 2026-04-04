@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+import { logger } from '@/lib/logger';
 
 export class ItopService {
   private client: AxiosInstance;
@@ -135,13 +136,69 @@ export class ItopService {
     }
   }
 
-  private buildQuery(class_name: string) {
+  async updateVirtualMachine(key: string, fields: Record<string, string | number | null | undefined>) {
+    return this.updateObject('VirtualMachine', key, fields);
+  }
+
+  async updateServer(key: string, fields: Record<string, string | number | null | undefined>) {
+    return this.updateObject('Server', key, fields);
+  }
+
+  async updateLogicalVolume(key: string, fields: Record<string, string | number | null | undefined>) {
+    return this.updateObject('LogicalVolume', key, fields);
+  }
+
+  async updateObject(className: string, key: string, fields: Record<string, string | number | null | undefined>) {
+    try {
+      if (!key) {
+        throw new Error(`Thiếu khóa đối tượng cần cập nhật cho ${className}.`);
+      }
+
+      const filteredFields = Object.fromEntries(
+        Object.entries(fields).filter(([, value]) => value !== undefined),
+      ) as Record<string, string | number | null>;
+
+      if (Object.keys(filteredFields).length === 0) {
+        throw new Error(`Không có trường nào để cập nhật cho ${className} (${key}).`);
+      }
+
+      logger.debug('iTop update started', { className, key, fieldCount: Object.keys(filteredFields).length });
+      const response = await this.client.post('/webservices/rest.php', this.buildQuery(className, {
+        operation: 'core/update',
+        key,
+        fields: filteredFields,
+      }), {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      });
+
+      if (response.status >= 200 && response.status < 300) {
+        if (response.data?.code === 0) {
+          logger.debug('iTop update finished', { className, key, status: response.status });
+          return response.data;
+        }
+
+        throw new Error(response.data?.message || `iTop từ chối cập nhật ${className} (${key}).`);
+      }
+
+      throw new Error(`HTTP ${response.status} khi cập nhật ${className} (${key}).`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logger.error('iTop update failed', { className, key, message });
+      throw new Error(`Không thể cập nhật iTop cho ${className} (${key}): ${message}`);
+    }
+  }
+
+  private buildQuery(className: string, overrides?: Record<string, unknown>) {
     const jsonData: Record<string, string> = {
       operation: 'core/get',
-      class: class_name,
-      key: 'SELECT ' + class_name,
+      class: className,
+      key: 'SELECT ' + className,
       output_fields: '*',
     };
+
+    if (overrides) {
+      Object.assign(jsonData, overrides);
+    }
 
     // Build URLEncoded params with auth at top level
     const params: Record<string, string> = {

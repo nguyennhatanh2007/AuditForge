@@ -25,6 +25,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const created = await markDiscrepancyAsException(numericId, parsed.reason, parsed.createdBy);
     return NextResponse.json({ data: created }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Không thể đánh dấu ngoại lệ.' }, { status: 400 });
+    const message = error instanceof Error ? error.message : 'Không thể đánh dấu ngoại lệ.';
+    return NextResponse.json(
+      { error: `Không thể đánh dấu ngoại lệ: ${message}` },
+      { status: 400 },
+    );
   }
 }

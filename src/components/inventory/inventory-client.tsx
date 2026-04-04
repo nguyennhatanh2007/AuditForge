@@ -39,6 +39,9 @@ export function InvenuoryClient() {
 
   const getDataTypeLabel = (key: string) => {
     const labels: Record<string, string> = {
+      arrays: '🧩 Array',
+      pools: '🗂️ Pool',
+      capacity: '📈 Capacity',
       virtualMachines: '☁️ Máy Ảo',
       servers: '🖥️ Máy Chủ',
       hosts: '🖥️ ESXi Hosts',

@@ -1,4 +1,4 @@
-type LogLevel = 'info' | 'warn' | 'error';
+type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 type LogMeta = Record<string, unknown>;
 
@@ -26,10 +26,18 @@ function write(level: LogLevel, message: string, meta?: LogMeta) {
     return;
   }
 
+  if (level === 'debug') {
+    console.debug(line, payload);
+    return;
+  }
+
   console.info(line, payload);
 }
 
 export const logger = {
+  debug(message: string, meta?: LogMeta) {
+    write('debug', message, meta);
+  },
   info(message: string, meta?: LogMeta) {
     write('info', message, meta);
   },

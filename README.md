@@ -21,6 +21,27 @@ Audit Forge is a Next.js 15 App Router web application for CMDB synchronization 
 
 Copy `.env.example` to `.env.local` and fill MySQL + integration credentials.
 
+### Storage API auth for array pulls
+
+The storage collectors can read credentials from one of these sources:
+
+- `STORAGE_SOURCE_CONFIG_FILE`: path to a JSON file with array connection data.
+- `STORAGE_SOURCE_CONFIG_JSON`: inline JSON with the same shape as the file.
+- Database fallback: enabled `system_configs` rows for `unity`, `pure`, and `alletra`.
+
+Example file format is available at [config/storage-sources.example.json](config/storage-sources.example.json).
+
+The file-based format supports `passwordFile` so Docker secrets or mounted files can be used instead of plaintext secrets.
+
+### Storage API
+
+Use the storage endpoints to pull array summaries and LUN details directly:
+
+- `GET /api/storage` for all configured storage systems.
+- `GET /api/storage?view=summary` for array-level capacity summaries.
+- `GET /api/storage?view=luns` for normalized LUN records.
+- `GET /api/inventory` now includes Unity, Pure, and Alletra storage data alongside vCenter and iTOP.
+
 ## Deploy with Docker (App container + External DB)
 
 This project supports running only the Next.js app in Docker while keeping MySQL outside Docker.

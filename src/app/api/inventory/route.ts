@@ -3,6 +3,10 @@ import { getDb } from '@/lib/db';
 import { VcenterService } from '@/services/vcenter.service';
 import { ItopService } from '@/services/itop.service';
 import { decryptSecret } from '@/lib/crypto';
+import { AlletraService } from '@/services/alletra.service';
+import { PureService } from '@/services/pure.service';
+import { UnityService } from '@/services/unity.service';
+import { normalizeStorageLuns, normalizeStorageSummary } from '@/lib/storage-normalizer';
 
 export async function GET(request: NextRequest) {
   try {
@@ -80,6 +84,10 @@ async function getSystemData(config: any) {
       return await getVcenterData(config);
     case 'itop':
       return await getItopData(config);
+    case 'unity':
+    case 'pure':
+    case 'alletra':
+      return await getStorageData(config);
     default:
       return {
         error: `System type ${config.system_type} not supported in inventory`,
@@ -195,6 +203,108 @@ async function getItopData(config: any) {
     };
   } catch (error) {
     console.error('iTOP fetch error:', error);
+    throw error;
+  }
+}
+
+async function getStorageData(config: any) {
+  try {
+    const password = config.encrypted_password ? decryptSecret(config.encrypted_password) : undefined;
+    const service =
+      config.system_type === 'unity'
+        ? new UnityService(config.url, config.username, password)
+        : config.system_type === 'pure'
+          ? new PureService(config.url, password)
+          : new AlletraService(config.url, config.username, password);
+      const storageService = service as unknown as Record<string, (...args: any[]) => Promise<any>>;
+
+    const [arrays, pools, luns, hosts] = await Promise.all([
+        storageService.fetchArrays ? storageService.fetchArrays().catch(() => []) : [],
+        storageService.fetchPools ? storageService.fetchPools().catch(() => []) : [],
+        storageService.fetchLUNs
+          ? storageService.fetchLUNs().catch(() => [])
+          : storageService.fetchVolumes
+            ? storageService.fetchVolumes().catch(() => [])
+            : [],
+        storageService.fetchHosts ? storageService.fetchHosts().catch(() => []) : [],
+    ]);
+
+    const summary = normalizeStorageSummary(
+      {
+        id: String(config.id),
+        sourceSystem: config.name || config.system_type,
+        systemType: config.system_type,
+        name: config.name || config.system_type,
+        url: config.url,
+      },
+      { arrays, pools, luns, hosts },
+    );
+
+    const normalizedLuns = normalizeStorageLuns(
+      {
+        id: String(config.id),
+        sourceSystem: config.name || config.system_type,
+        systemType: config.system_type,
+        name: config.name || config.system_type,
+        url: config.url,
+      },
+      luns,
+    );
+
+    return {
+      system: config.name || config.system_type,
+      url: config.url,
+      lastFetch: summary.lastFetch,
+      data: {
+        arrays: {
+          count: summary.counts.arrays,
+          items: arrays.map((array: any, index: number) => ({
+            name: array.name || array.id || `${config.name || config.system_type}-array-${index + 1}`,
+            id: array.id || array.name || `${index + 1}`,
+            totalBytes: array.total_bytes || array.total_capacity_bytes || array.capacity || array.size || null,
+            usedBytes: array.used_bytes || array.used_capacity_bytes || array.used || null,
+            freeBytes: array.free_bytes || array.free_capacity_bytes || array.available || null,
+            provisionedBytes: array.provisioned_bytes || array.total_provisioned || array.virtual || null,
+            dataReduction: array.data_reduction ?? array.dataReduction ?? null,
+          })),
+        },
+        pools: {
+          count: summary.counts.pools,
+          items: pools.map((pool: any, index: number) => ({
+            name: pool.name || pool.id || `${config.name || config.system_type}-pool-${index + 1}`,
+            id: pool.id || pool.name || `${index + 1}`,
+            capacity: pool.capacity || pool.size || pool.total_capacity || null,
+            usable: pool.usable || pool.available || pool.free || null,
+          })),
+        },
+        logicalVolumes: {
+          count: normalizedLuns.length,
+          items: normalizedLuns.map((lun) => ({
+            name: lun.name,
+            id: lun.wwn || lun.name,
+            wwn: lun.wwn,
+            host: lun.host,
+            size: lun.sizeLabel,
+            provisioning: lun.provisioning,
+            creator: lun.creator || '-',
+          })),
+        },
+        hosts: {
+          count: summary.counts.hosts,
+          items: hosts.map((host: any, index: number) => ({
+            name: host.name || host.id || `${config.name || config.system_type}-host-${index + 1}`,
+            id: host.id || host.wwn || host.name || `${index + 1}`,
+            wwn: host.wwn || host.world_wide_name || '-',
+          })),
+        },
+        capacity: {
+          count: 1,
+          items: [summary.capacity],
+        },
+      },
+    };
+  } catch (error) {
+    console.error('storage fetch error:', error);
     throw error;
   }
 }

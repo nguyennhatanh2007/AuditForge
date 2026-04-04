@@ -32,15 +32,19 @@ type DiscrepancyPage = {
 };
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
-    headers: { 'Content-Type': 'application/json' },
-    ...init,
-  });
-  const payload = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error(payload.error ?? 'Yêu cầu không thành công.');
+  try {
+    const response = await fetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+      ...init,
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(payload.error ?? 'Yêu cầu không thành công.');
+    }
+    return payload.data as T;
+  } catch (error) {
+    throw new Error(error instanceof Error ? error.message : 'Không thể gửi yêu cầu đến máy chủ.');
   }
-  return payload.data as T;
 }
 
 const severityColor = {
@@ -104,7 +108,32 @@ export function DiscrepanciesClient() {
         void loadItems(1);
       }, 1000);
     } catch (exception) {
-      setSyncMessage(`❌ Lỗi sync: ${exception instanceof Error ? exception.message : 'Không rõ lỗi'}`);
+      setSyncMessage(`❌ Không thể sync lúc này: ${exception instanceof Error ? exception.message : 'Không rõ lỗi'}`);
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  async function handleUpdateItop() {
+    setSyncing(true);
+    setSyncMessage('');
+    try {
+      const response = await fetch('/api/sync-live', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ applyItopUpdates: true }),
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(result.error || 'Không thể đẩy cập nhật lên iTOP.');
+      }
+
+      const updates = result.data?.itopUpdates;
+      setSyncMessage(`✅ Đã xử lý cập nhật iTOP: ${updates?.updated || 0} thành công, ${updates?.failed || 0} lỗi, ${updates?.skipped || 0} bỏ qua.`);
+      void loadItems(pageData.page);
+    } catch (exception) {
+      setSyncMessage(`❌ Không thể cập nhật iTOP: ${exception instanceof Error ? exception.message : 'Không rõ lỗi'}`);
     } finally {
       setSyncing(false);
     }
@@ -145,6 +174,10 @@ export function DiscrepanciesClient() {
           >
             {syncing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : '🔄'}
             {syncing ? 'Đang Sync...' : 'Sync Thủ Công'}
+          </Button>
+          <Button variant="secondary" onClick={() => void handleUpdateItop()} disabled={syncing || loading}>
+            {syncing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : '⬆️'}
+            {syncing ? 'Đang Cập Nhật...' : 'Cập Nhật iTOP'}
           </Button>
           <Button variant="ghost" onClick={() => void loadItems(pageData.page)} disabled={loading || syncing}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : '↻'} Tải lại

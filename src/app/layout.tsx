@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { ThemeProvider } from '@/components/theme-provider';
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
+import { RouteLoadingOverlay } from '@/components/layout/route-loading-overlay';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -16,6 +17,9 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     <html lang="vi" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
+          <Suspense fallback={null}>
+            <RouteLoadingOverlay />
+          </Suspense>
           {children}
         </ThemeProvider>
       </body>
