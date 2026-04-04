@@ -8,7 +8,6 @@ export type StorageConnectionConfig = {
   url: string;
   username?: string;
   password?: string;
-  passwordFile?: string;
   port?: number | null;
   apiPath?: string | null;
   enabled?: boolean;

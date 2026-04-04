@@ -23,15 +23,9 @@ Copy `.env.example` to `.env.local` and fill MySQL + integration credentials.
 
 ### Storage API auth for array pulls
 
-The storage collectors can read credentials from one of these sources:
+Storage credentials are stored in MySQL, in the existing `system_configs` table, and decrypted from `encrypted_password` when arrays are queried.
 
-- `STORAGE_SOURCE_CONFIG_FILE`: path to a JSON file with array connection data.
-- `STORAGE_SOURCE_CONFIG_JSON`: inline JSON with the same shape as the file.
-- Database fallback: enabled `system_configs` rows for `unity`, `pure`, and `alletra`.
-
-Example file format is available at [config/storage-sources.example.json](config/storage-sources.example.json).
-
-The file-based format supports `passwordFile` so Docker secrets or mounted files can be used instead of plaintext secrets.
+Use the Configuration screen to create or update the `unity`, `pure`, and `alletra` entries. That keeps Docker simple: the app only needs DB access, not separate storage-secret env vars.
 
 ### Storage API
 
