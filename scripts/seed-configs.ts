@@ -11,8 +11,9 @@ async function seedConfigurations() {
   try {
     // Check if configurations already exist
     const existing = await db('configurations').count('* as count').first();
-    if (existing && existing.count > 0) {
-      console.log(`Found ${existing.count} existing configurations. Updating them...`);
+    const existingCount = Number(existing?.count ?? 0);
+    if (existingCount > 0) {
+      console.log(`Found ${existingCount} existing configurations. Updating them...`);
     }
 
     // Clear existing configurations

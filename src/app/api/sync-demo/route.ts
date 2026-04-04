@@ -71,8 +71,11 @@ export async function POST(request: Request) {
       } else {
         // Compare field values
         const itopVm = vmDataMap.itop.get(vmName);
+        if (!itopVm) {
+          continue;
+        }
         const esxiMemory = esxiVm.memory_mb || 0;
-        const itopMemory = itopVm.fields?.ram ? parseInt(itopVm.fields.ram) : 0;
+        const itopMemory = itopVm.fields?.ram ? parseInt(itopVm.fields.ram, 10) : 0;
 
         if (esxiMemory !== itopMemory && esxiMemory > 0 && itopMemory > 0) {
           discrepancies.push({

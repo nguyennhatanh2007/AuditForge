@@ -116,7 +116,7 @@ export function DiscrepanciesVMTable({
                 <td className="px-4 py-3 text-center">
                   <Button
                     size="sm"
-                    variant="primary"
+                    variant="default"
                     onClick={() => onAddException(item)}
                     disabled={addingExceptionId === item.id || item.isException}
                     className="bg-blue-600 hover:bg-blue-700 text-white gap-1 text-xs"

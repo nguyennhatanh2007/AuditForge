@@ -1,0 +1,15 @@
+services:
+  app:
+    build: .
+    container_name: auditforge-app
+    ports:
+      - '3000:3000'
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      SYNC_ENCRYPTION_KEY: ${SYNC_ENCRYPTION_KEY}
+      AUDIT_EXPORT_DIR: ${AUDIT_EXPORT_DIR:-./data/exports}
+    restart: unless-stopped

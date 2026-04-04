@@ -138,7 +138,7 @@ export function DiscrepanciesClient() {
         </div>
         <div className="flex gap-2">
           <Button
-            variant="primary"
+            variant="default"
             onClick={() => void handleSync()}
             disabled={syncing || loading}
             className="bg-blue-600 hover:bg-blue-700"
