@@ -35,6 +35,8 @@ final class Env
                 $value = substr($value, 1, -1);
             }
 
+            $value = str_replace(['\\$', '\\n', '\\r', '\\t'], ['$', "\n", "\r", "\t"], $value);
+
             if (getenv($key) === false) {
                 putenv($key . '=' . $value);
                 $_ENV[$key] = $value;

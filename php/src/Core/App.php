@@ -4,15 +4,6 @@ declare(strict_types=1);
 
 namespace AuditForge\Core;
 
-use AuditForge\Controllers\ConfigurationController;
-use AuditForge\Controllers\DiscrepancyController;
-use AuditForge\Controllers\ExceptionController;
-use AuditForge\Controllers\HealthController;
-use AuditForge\Controllers\HomeController;
-use AuditForge\Controllers\InventoryController;
-use AuditForge\Controllers\StorageController;
-use AuditForge\Controllers\SyncController;
-
 final class App
 {
     private Router $router;
@@ -43,35 +34,26 @@ final class App
 
     private function registerRoutes(): void
     {
-        $health = new HealthController();
-        $home = new HomeController();
-        $config = new ConfigurationController();
-        $storage = new StorageController();
-        $inventory = new InventoryController();
-        $sync = new SyncController();
-        $discrepancy = new DiscrepancyController();
-        $exception = new ExceptionController();
+        $this->router->add('GET', '/', fn(Request $request, array $params) => (new \AuditForge\Controllers\HomeController())->index($request, $params));
 
-        $this->router->add('GET', '/', [$home, 'index']);
+        $this->router->add('GET', '/api/health', fn(Request $request, array $params) => (new \AuditForge\Controllers\HealthController())->index($request, $params));
 
-        $this->router->add('GET', '/api/health', [$health, 'index']);
+        $this->router->add('GET', '/api/configurations', fn(Request $request, array $params) => (new \AuditForge\Controllers\ConfigurationController())->index($request, $params));
+        $this->router->add('POST', '/api/configurations', fn(Request $request, array $params) => (new \AuditForge\Controllers\ConfigurationController())->store($request, $params));
+        $this->router->add('PUT', '/api/configurations/{id}', fn(Request $request, array $params) => (new \AuditForge\Controllers\ConfigurationController())->update($request, $params));
+        $this->router->add('DELETE', '/api/configurations/{id}', fn(Request $request, array $params) => (new \AuditForge\Controllers\ConfigurationController())->delete($request, $params));
+        $this->router->add('POST', '/api/configurations/{id}/test', fn(Request $request, array $params) => (new \AuditForge\Controllers\ConfigurationController())->test($request, $params));
 
-        $this->router->add('GET', '/api/configurations', [$config, 'index']);
-        $this->router->add('POST', '/api/configurations', [$config, 'store']);
-        $this->router->add('PUT', '/api/configurations/{id}', [$config, 'update']);
-        $this->router->add('DELETE', '/api/configurations/{id}', [$config, 'delete']);
-        $this->router->add('POST', '/api/configurations/{id}/test', [$config, 'test']);
+        $this->router->add('GET', '/api/storage', fn(Request $request, array $params) => (new \AuditForge\Controllers\StorageController())->index($request, $params));
+        $this->router->add('GET', '/api/inventory', fn(Request $request, array $params) => (new \AuditForge\Controllers\InventoryController())->index($request, $params));
+        $this->router->add('POST', '/api/sync-live', fn(Request $request, array $params) => (new \AuditForge\Controllers\SyncController())->syncLive($request, $params));
 
-        $this->router->add('GET', '/api/storage', [$storage, 'index']);
-        $this->router->add('GET', '/api/inventory', [$inventory, 'index']);
-        $this->router->add('POST', '/api/sync-live', [$sync, 'syncLive']);
+        $this->router->add('GET', '/api/discrepancies', fn(Request $request, array $params) => (new \AuditForge\Controllers\DiscrepancyController())->index($request, $params));
+        $this->router->add('POST', '/api/discrepancies/{id}/exception', fn(Request $request, array $params) => (new \AuditForge\Controllers\DiscrepancyController())->markException($request, $params));
 
-        $this->router->add('GET', '/api/discrepancies', [$discrepancy, 'index']);
-        $this->router->add('POST', '/api/discrepancies/{id}/exception', [$discrepancy, 'markException']);
-
-        $this->router->add('GET', '/api/exceptions', [$exception, 'index']);
-        $this->router->add('POST', '/api/exceptions', [$exception, 'store']);
-        $this->router->add('PUT', '/api/exceptions/{id}', [$exception, 'update']);
-        $this->router->add('DELETE', '/api/exceptions/{id}', [$exception, 'delete']);
+        $this->router->add('GET', '/api/exceptions', fn(Request $request, array $params) => (new \AuditForge\Controllers\ExceptionController())->index($request, $params));
+        $this->router->add('POST', '/api/exceptions', fn(Request $request, array $params) => (new \AuditForge\Controllers\ExceptionController())->store($request, $params));
+        $this->router->add('PUT', '/api/exceptions/{id}', fn(Request $request, array $params) => (new \AuditForge\Controllers\ExceptionController())->update($request, $params));
+        $this->router->add('DELETE', '/api/exceptions/{id}', fn(Request $request, array $params) => (new \AuditForge\Controllers\ExceptionController())->delete($request, $params));
     }
 }
