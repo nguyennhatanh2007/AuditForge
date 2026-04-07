@@ -1,0 +1,40 @@
+name: Build Docker Tar Artifact
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-tar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: |
+          set -e
+          docker build -f docker/Dockerfile -t auditforge:${{ github.sha }} .
+
+      - name: Save image archive
+        run: |
+          set -e
+          mkdir -p dist
+          docker save -o dist/auditforge-${{ github.sha }}.tar auditforge:${{ github.sha }}
+
+      - name: Upload image archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: auditforge-${{ github.sha }}
+          path: dist/auditforge-${{ github.sha }}.tar
+          if-no-files-found: error
+          retention-days: 30
