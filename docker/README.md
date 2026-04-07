@@ -13,6 +13,8 @@ Docker configuration and deployment files for AuditForge.
 - `DOCKER.md` - Comprehensive deployment guide
 - `docker-build.sh` - Linux/macOS build helper script
 - `docker-build.bat` - Windows build helper script
+- `export-image.sh` - Linux/macOS image archive exporter
+- `export-image.bat` - Windows image archive exporter
 
 ## Quick Start
 
@@ -28,10 +30,22 @@ cp .env.docker .env
 docker-compose -f docker/docker-compose.yml up -d
 ```
 
+### Offline Package (Single `.tar` File)
+```bash
+# On the build machine
+cd docker
+docker-build.bat auditforge latest
+export-image.bat auditforge latest
+
+# Copy auditforge-latest.tar to the remote machine, then:
+docker load -i auditforge-latest.tar
+docker run -d --name auditforge -p 3000:3000 --env-file .env auditforge:latest
+```
+
 ### Manual Build
 ```bash
 cd docker
-docker build -t auditforge:latest .
+docker build -t auditforge:latest ..
 ```
 
 ## Image Information
@@ -66,6 +80,11 @@ cp .env.docker .env
    - Source code mounted as volume
    - Hot reload enabled
    - For local development
+
+4. **Offline package**
+   - Build once and export to `.tar`
+   - Copy the `.tar` file to a remote server with no Internet
+   - Load it with `docker load -i`
 
 ## For More Information
 

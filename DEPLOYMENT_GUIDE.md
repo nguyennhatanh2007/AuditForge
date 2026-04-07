@@ -15,6 +15,79 @@ Download pre-built images pushed from the repository (requires automated CI/CD s
 #### **Option 3: Manual Build & Push**
 Build locally, then push to your own registry (Docker Hub, GHCR, etc.) for sharing.
 
+#### **Option 4: Export a Single `.tar` Image File**
+Best for remote machines with no Internet access.
+
+Build the image on a machine that has Internet, then export it with `docker save`. You copy the `.tar` file to the remote server and load it with `docker load`.
+
+---
+
+## 📦 Offline Deployment: One Image File Only
+
+### **When to use this mode**
+- Remote server has no Internet access.
+- Remote server cannot pull from Docker Hub or GHCR.
+- You want a single portable file to move between machines.
+
+### **Step 1: Build on a machine with Internet**
+
+Windows:
+```bash
+cd docker
+docker-build.bat auditforge latest
+export-image.bat auditforge latest
+```
+
+Linux/macOS:
+```bash
+cd docker
+chmod +x docker-build.sh export-image.sh
+./docker-build.sh auditforge latest
+./export-image.sh auditforge latest
+```
+
+This creates a file like:
+```bash
+auditforge-latest.tar
+```
+
+### **Step 2: Copy the `.tar` file to the remote server**
+
+Use any transfer method you have:
+- USB drive
+- SCP / SFTP
+- Shared folder
+- File copy tool
+
+### **Step 3: Load the image on the remote server**
+
+```bash
+docker load -i auditforge-latest.tar
+```
+
+### **Step 4: Run the container without Internet**
+
+```bash
+docker run -d \
+  --name auditforge \
+  -p 3000:3000 \
+  --env-file .env \
+  auditforge:latest
+```
+
+### **Step 5: Verify**
+
+```bash
+docker images | grep auditforge
+docker ps
+docker logs -f auditforge
+```
+
+### **Important note**
+- The remote server does **not** need Internet after `docker load`.
+- The build machine still needs Internet the first time to download the base image (`node:20-alpine`).
+- If you need a fully air-gapped build machine too, you must pre-load the base image there first.
+
 ---
 
 ## 🚀 Step-by-Step: Build & Deploy Locally (Recommended)
