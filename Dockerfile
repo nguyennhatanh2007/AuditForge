@@ -1,30 +1,27 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Install deps
+# Install dependencies for build
 COPY package.json package-lock.json* ./
-RUN npm ci --production=false
+RUN npm ci --omit=dev
 
 # Copy source and build
 COPY . .
 RUN mkdir -p public
 RUN npm run build
 
-FROM node:20-alpine AS runner
+FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Install only production deps
+# Install only runtime dependencies (minimal)
 COPY package.json package-lock.json* ./
-RUN npm ci --production
-# next.config.ts requires TypeScript at runtime
-RUN npm install --no-save typescript
+RUN npm ci --omit=dev && npm cache clean --force
 
-# Copy built app
-COPY --from=builder /app/.next .next
+# Copy built application from builder stage
+COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.ts ./next.config.ts
-COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/next.config.ts ./
 
 EXPOSE 3000
-CMD ["npm", "run", "start"]
+CMD ["npm", "start"]

@@ -37,12 +37,21 @@ if errorlevel 1 (
 ) else (
     echo [+] Build successful!
     echo.
+    for /f %%i in ('docker images --format "{{.Size}}" !FULL_IMAGE_NAME!') do set SIZE=%%i
+    echo Image size: !SIZE!
+    echo.
     echo Next steps:
-    echo 1. Configure environment: copy .env.docker .env
-    echo 2. Edit .env with your settings
-    echo 3. Start services: docker-compose up -d
-    echo 4. View logs: docker-compose logs -f app
-    echo 5. Access app: http://localhost:3000
+    echo.
+    echo [*] Lightweight mode (app only, external MySQL^):
+    echo     1. copy .env.docker .env
+    echo     2. Edit .env with your MySQL host/credentials
+    echo     3. docker-compose -f docker-compose.app.yml up -d
+    echo.
+    echo [*] Full stack mode (app + MySQL^):
+    echo     1. copy .env.docker .env
+    echo     2. docker-compose up -d
+    echo.
+    echo [*] Access app: http://localhost:3000
     echo.
 )
 
