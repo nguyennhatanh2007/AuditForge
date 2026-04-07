@@ -42,6 +42,9 @@ docker load -i auditforge-latest.tar
 docker run -d --name auditforge -p 3000:3000 --env-file .env auditforge:latest
 ```
 
+### Automated Archive via GitHub Actions
+The workflow at `.github/workflows/docker-image.yml` can build the same `.tar` automatically on `main` and upload it as a downloadable artifact. You can also dispatch it manually to push into an internal registry.
+
 ### Manual Build
 ```bash
 cd docker

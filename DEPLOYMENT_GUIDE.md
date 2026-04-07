@@ -20,6 +20,11 @@ Best for remote machines with no Internet access.
 
 Build the image on a machine that has Internet, then export it with `docker save`. You copy the `.tar` file to the remote server and load it with `docker load`.
 
+#### **Option 5: Let GitHub Actions Build the `.tar` for You**
+This repository includes a workflow that can automatically build an image archive artifact on `main`, or push to an internal registry when you manually dispatch it.
+
+After the workflow finishes, download the artifact from the GitHub Actions run page and copy it to the remote server.
+
 ---
 
 ## 📦 Offline Deployment: One Image File Only
@@ -50,6 +55,15 @@ This creates a file like:
 ```bash
 auditforge-latest.tar
 ```
+
+### **Alternative: Use GitHub Actions to build the archive**
+
+1. Push your changes to `main`.
+2. Open the repository's **Actions** tab.
+3. Download the uploaded artifact from the latest run.
+4. Copy the `.tar` file to the remote server.
+
+The workflow also supports **workflow_dispatch** with `delivery_mode=registry` if you want to push to an internal registry instead.
 
 ### **Step 2: Copy the `.tar` file to the remote server**
 
