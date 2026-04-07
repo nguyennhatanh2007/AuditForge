@@ -7,7 +7,7 @@ export default function ExceptionsPage() {
       <div className="space-y-6">
         <div>
           <h2 className="text-3xl font-semibold">Ngoại lệ</h2>
-          <p className="text-sm text-mutedFg">Quản lý các bản ghi cần loại trừ khỏi danh sách sai lệch.</p>
+          <p className="text-sm text-mutedFg">Quản lý bản ghi loại trừ khi đối soát.</p>
         </div>
         <ExceptionsClient />
       </div>

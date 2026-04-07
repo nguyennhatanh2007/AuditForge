@@ -83,8 +83,8 @@ export function SyncDataSummary() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold mb-2">Dữ Liệu Được Sync Từ Các Hệ Thống</h2>
-        <p className="text-sm text-mutedFg">Số liệu đã lấy từ mỗi nguồn dữ liệu</p>
+        <h2 className="mb-2 text-2xl font-semibold">Tổng quan dữ liệu đã đồng bộ</h2>
+        <p className="text-sm text-mutedFg">Theo dõi nhanh số liệu theo từng nguồn.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -163,7 +163,7 @@ export function SyncDataSummary() {
 
       {/* Chi tiết */}
       <Card className="border-slate-200/50">
-        <h3 className="font-semibold mb-4">Thông Tin Chi Tiết Sync</h3>
+        <h3 className="mb-4 font-semibold">Chi tiết phiên đồng bộ</h3>
         <div className="space-y-2 text-sm">
           <DetailInfo 
             label="Số lượng nguồn dữ liệu"

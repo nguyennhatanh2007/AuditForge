@@ -1,8 +1,8 @@
 import { SyncClient } from '@/components/sync/sync-client';
 
 export const metadata = {
-  title: 'Sync Hệ Thống - AuditForge',
-  description: 'Đồng bộ dữ liệu giữa iTOP và ESXi',
+  title: 'Đồng bộ dữ liệu - AuditForge',
+  description: 'Thực thi đối soát dữ liệu giữa các hệ thống nguồn và hệ thống tham chiếu',
 };
 
 export default function SyncPage() {
@@ -11,10 +11,9 @@ export default function SyncPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">🔄 Sync Thủ Công</h1>
+          <h1 className="mb-2 text-4xl font-bold text-gray-900">Đồng bộ thủ công</h1>
           <p className="text-gray-600">
-            Đồng bộ dữ liệu giữa iTOP CMDB (hệ thống tham chiếu) và ESXi (hệ thống nguồn).
-            Hệ thống sẽ so sánh tất cả VMs, Servers và Storage để tìm các vấn đề.
+            Chạy một phiên đối soát theo yêu cầu và ghi nhận sai lệch.
           </p>
         </div>
 
@@ -23,13 +22,12 @@ export default function SyncPage() {
 
         {/* Info Footer */}
         <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h3 className="font-semibold text-blue-900 mb-2">📖 Hướng Dẫn</h3>
+          <h3 className="mb-2 font-semibold text-blue-900">Hướng dẫn nhanh</h3>
           <ul className="text-sm text-blue-800 space-y-1">
-            <li>• Nhấn <strong>Sync Thủ Công</strong> để bắt đầu so sánh các hệ thống</li>
-            <li>• <strong>Vấn đề CRITICAL 🔴</strong>: Lỗi trường (Field Mismatch) - cần chú ý ngay</li>
-            <li>• <strong>Vấn đề MEDIUM 🟡</strong>: Dữ liệu thiếu hoặc thừa - cần kiểm tra</li>
-            <li>• <strong>Vấn đề LOW 🟢</strong>: Thông tin tham khảo</li>
-            <li>• Kết quả được lưu để theo dõi lịch sử đồng bộ</li>
+            <li>• Chạy Sync để tạo phiên đối soát mới.</li>
+            <li>• Xử lý sai lệch mức cao trước.</li>
+            <li>• Có thể đẩy cập nhật hợp lệ lên iTOP.</li>
+            <li>• Phiên chạy được lưu trong lịch sử.</li>
           </ul>
         </div>
       </div>

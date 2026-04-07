@@ -1,19 +1,29 @@
-import axios, { AxiosInstance } from 'axios';
 import { logger } from '@/lib/logger';
+import { createStorageClient, fetchPagedList } from '@/services/storage-http';
+import type { AxiosInstance } from 'axios';
 
 export class PureService {
   private client: AxiosInstance;
+  private readonly username?: string;
+  private readonly secret?: string;
 
   constructor(
     private readonly baseUrl: string,
-    private readonly apiToken?: string
+    usernameOrToken?: string,
+    password?: string
   ) {
-    this.client = axios.create({
+    if (password) {
+      this.username = usernameOrToken;
+      this.secret = password;
+    } else {
+      this.secret = usernameOrToken;
+    }
+
+    this.client = createStorageClient({
       baseURL: this.baseUrl,
-      headers: apiToken ? { 'X-Auth-Token': apiToken } : {},
-      timeout: 30000,
-      validateStatus: (status) => status < 500,
-      httpsAgent: { rejectUnauthorized: false } as any,
+      username: this.username,
+      password: this.secret,
+      tokenHeader: 'X-Auth-Token',
     });
   }
 
@@ -32,67 +42,49 @@ export class PureService {
   }
 
   async fetchArrays() {
-    try {
-      logger.debug('Fetching Pure arrays', { baseUrl: this.baseUrl, endpoint: '/api/2.0/arrays' });
-      const response = await this.client.get('/api/2.0/arrays');
-      if (response.status === 200 && Array.isArray(response.data)) {
-        logger.debug('Fetched Pure arrays', { baseUrl: this.baseUrl, count: response.data.length });
-        return response.data;
-      }
-      logger.debug('Pure arrays request returned non-array payload', { baseUrl: this.baseUrl, status: response.status });
-      return [];
-    } catch (error) {
-      console.error('Failed to fetch Pure arrays:', error);
-      return [];
-    }
+    logger.debug('Fetching Pure arrays', { baseUrl: this.baseUrl, endpoint: '/api/2.0/arrays' });
+    const records = await fetchPagedList(this.client, {
+      endpoint: '/api/2.0/arrays',
+      mode: 'none',
+    });
+    logger.debug('Fetched Pure arrays', { baseUrl: this.baseUrl, count: records.length });
+    return records;
   }
 
   async fetchVolumes() {
-    try {
-      logger.debug('Fetching Pure volumes', { baseUrl: this.baseUrl, endpoint: '/api/2.0/volumes' });
-      const response = await this.client.get('/api/2.0/volumes');
-      if (response.status === 200 && Array.isArray(response.data)) {
-        logger.debug('Fetched Pure volumes', { baseUrl: this.baseUrl, count: response.data.length });
-        return response.data;
-      }
-      logger.debug('Pure volumes request returned non-array payload', { baseUrl: this.baseUrl, status: response.status });
-      return [];
-    } catch (error) {
-      console.error('Failed to fetch Pure volumes:', error);
-      return [];
-    }
+    logger.debug('Fetching Pure volumes', { baseUrl: this.baseUrl, endpoint: '/api/2.0/volumes' });
+    const records = await fetchPagedList(this.client, {
+      endpoint: '/api/2.0/volumes',
+      mode: 'token',
+      tokenParam: 'continuation_token',
+      tokenFields: ['continuation_token', 'next_token', 'nextToken'],
+    });
+    logger.debug('Fetched Pure volumes', { baseUrl: this.baseUrl, count: records.length });
+    return records;
   }
 
   async fetchHosts() {
-    try {
-      logger.debug('Fetching Pure hosts', { baseUrl: this.baseUrl, endpoint: '/api/2.0/hosts' });
-      const response = await this.client.get('/api/2.0/hosts');
-      if (response.status === 200 && Array.isArray(response.data)) {
-        logger.debug('Fetched Pure hosts', { baseUrl: this.baseUrl, count: response.data.length });
-        return response.data;
-      }
-      logger.debug('Pure hosts request returned non-array payload', { baseUrl: this.baseUrl, status: response.status });
-      return [];
-    } catch (error) {
-      console.error('Failed to fetch Pure hosts:', error);
-      return [];
-    }
+    logger.debug('Fetching Pure hosts', { baseUrl: this.baseUrl, endpoint: '/api/2.0/hosts' });
+    const records = await fetchPagedList(this.client, {
+      endpoint: '/api/2.0/hosts',
+      mode: 'token',
+      tokenParam: 'continuation_token',
+      tokenFields: ['continuation_token', 'next_token', 'nextToken'],
+    });
+    logger.debug('Fetched Pure hosts', { baseUrl: this.baseUrl, count: records.length });
+    return records;
   }
 
   async fetchVolumeGroups() {
-    try {
-      logger.debug('Fetching Pure volume groups', { baseUrl: this.baseUrl, endpoint: '/api/2.0/volume-groups' });
-      const response = await this.client.get('/api/2.0/volume-groups');
-      if (response.status === 200 && Array.isArray(response.data)) {
-        logger.debug('Fetched Pure volume groups', { baseUrl: this.baseUrl, count: response.data.length });
-        return response.data;
-      }
-      logger.debug('Pure volume groups request returned non-array payload', { baseUrl: this.baseUrl, status: response.status });
-      return [];
-    } catch (error) {
-      console.error('Failed to fetch Pure volume groups:', error);
-      return [];
-    }
+    logger.debug('Fetching Pure volume groups', { baseUrl: this.baseUrl, endpoint: '/api/2.0/volume-groups' });
+    const records = await fetchPagedList(this.client, {
+      endpoint: '/api/2.0/volume-groups',
+      mode: 'token',
+      tokenParam: 'continuation_token',
+      tokenFields: ['continuation_token', 'next_token', 'nextToken'],
+    });
+    logger.debug('Fetched Pure volume groups', { baseUrl: this.baseUrl, count: records.length });
+    return records;
   }
 
   async fetchLUNs() {

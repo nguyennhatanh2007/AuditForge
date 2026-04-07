@@ -14,7 +14,7 @@ function createClient(config: StorageConnectionConfig) {
     case 'unity':
       return new UnityService(config.url, config.username, config.password);
     case 'pure':
-      return new PureService(config.url, config.password);
+      return new PureService(config.url, config.username, config.password);
     case 'alletra':
       return new AlletraService(config.url, config.username, config.password);
     default:
@@ -47,15 +47,38 @@ async function fetchConfigSnapshot(config: StorageConnectionConfig) {
     view: 'all',
   });
 
+  const warnings: Array<{ sourceSystem: string; systemType: string; scope: string; message: string }> = [];
+
+  const runFetch = async (scope: string, fetcher: (() => Promise<any>) | undefined) => {
+    if (!fetcher) {
+      return [];
+    }
+
+    try {
+      return await fetcher();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      warnings.push({
+        sourceSystem: hydrated.sourceSystem,
+        systemType: hydrated.systemType,
+        scope,
+        message,
+      });
+      logger.warn('Partial storage fetch failed', {
+        sourceSystem: hydrated.sourceSystem,
+        systemType: hydrated.systemType,
+        scope,
+        message,
+      });
+      return [];
+    }
+  };
+
   const [arrays, pools, luns, hosts] = await Promise.all([
-    storageClient.fetchArrays ? storageClient.fetchArrays().catch(() => []) : [],
-    storageClient.fetchPools ? storageClient.fetchPools().catch(() => []) : [],
-    storageClient.fetchLUNs
-      ? storageClient.fetchLUNs().catch(() => [])
-      : storageClient.fetchVolumes
-        ? storageClient.fetchVolumes().catch(() => [])
-        : [],
-    storageClient.fetchHosts ? storageClient.fetchHosts().catch(() => []) : [],
+    runFetch('arrays', storageClient.fetchArrays),
+    runFetch('pools', storageClient.fetchPools),
+    runFetch('luns', storageClient.fetchLUNs ?? storageClient.fetchVolumes),
+    runFetch('hosts', storageClient.fetchHosts),
   ]);
 
   logger.debug('Storage fetch completed', {
@@ -70,6 +93,7 @@ async function fetchConfigSnapshot(config: StorageConnectionConfig) {
   return {
     summary: normalizeStorageSummary(hydrated, { arrays, pools, luns, hosts }),
     luns: normalizeStorageLuns(hydrated, luns),
+    warnings,
   };
 }
 
@@ -90,7 +114,11 @@ export async function GET(request: NextRequest) {
 
     const configs = config ? [config] : await resolveStorageConfigs();
     logger.debug('Resolved storage configs for request', { count: configs.length, selectedBy: configId ? 'configId' : sourceSystem ? 'sourceSystem' : 'all' });
-    const snapshots: Array<{ summary: Awaited<ReturnType<typeof normalizeStorageSummary>>; luns: Awaited<ReturnType<typeof normalizeStorageLuns>> }> = [];
+    const snapshots: Array<{
+      summary: Awaited<ReturnType<typeof normalizeStorageSummary>>;
+      luns: Awaited<ReturnType<typeof normalizeStorageLuns>>;
+      warnings: Array<{ sourceSystem: string; systemType: string; scope: string; message: string }>;
+    }> = [];
 
     for (const storageConfig of configs) {
       const snapshot = await fetchConfigSnapshot(storageConfig);
@@ -101,16 +129,25 @@ export async function GET(request: NextRequest) {
 
     if (view === 'summary') {
       logger.debug('Returning storage summaries', { count: snapshots.length });
-      return NextResponse.json({ data: snapshots.map((snapshot) => snapshot.summary) });
+      return NextResponse.json({
+        data: snapshots.map((snapshot) => snapshot.summary),
+        warnings: snapshots.flatMap((snapshot) => snapshot.warnings),
+      });
     }
 
     if (view === 'luns') {
       logger.debug('Returning storage LUNs', { count: snapshots.reduce((total, snapshot) => total + snapshot.luns.length, 0) });
-      return NextResponse.json({ data: snapshots.flatMap((snapshot) => snapshot.luns) });
+      return NextResponse.json({
+        data: snapshots.flatMap((snapshot) => snapshot.luns),
+        warnings: snapshots.flatMap((snapshot) => snapshot.warnings),
+      });
     }
 
     logger.debug('Returning merged storage snapshot', { count: snapshots.length });
-    return NextResponse.json({ data: mergeStorageSnapshots(snapshots) });
+    return NextResponse.json({
+      data: mergeStorageSnapshots(snapshots),
+      warnings: snapshots.flatMap((snapshot) => snapshot.warnings),
+    });
   } catch (error) {
     logger.error('Storage API request failed', { message: error instanceof Error ? error.message : String(error) });
     return NextResponse.json(

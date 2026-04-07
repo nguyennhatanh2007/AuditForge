@@ -27,6 +27,39 @@ Storage credentials are stored in MySQL, in the existing `system_configs` table,
 
 Use the Configuration screen to create or update the `unity`, `pure`, and `alletra` entries. That keeps Docker simple: the app only needs DB access, not separate storage-secret env vars.
 
+#### Required `system_configs` fields
+
+- `system_type`: `unity`, `pure`, or `alletra`
+- `url`: base URL only, for example `https://10.10.10.20`
+- `api_path`: optional test path override (defaults are used if empty)
+- `username`: optional when vendor supports token-only auth
+- `encrypted_password`: encrypted secret (password or API token)
+
+#### Auth modes by vendor
+
+1. Unity (Unisphere 5.0.6)
+- Preferred: `username` + `password` (Basic Auth).
+- Token mode: leave `username` empty and place token in password field.
+- Default test path: `/api/types`.
+
+2. Pure FlashArray (Purity 6.5.5)
+- Token mode: leave `username` empty, put API token in password field.
+- Username/password mode: set both fields if your gateway/proxy enforces Basic Auth.
+- Default test path: `/api/2.0/arrays`.
+
+3. HPE Alletra
+- Username/password mode: set both fields.
+- Token mode: leave `username` empty, put token in password field.
+- Default test path: `/api/v1`.
+
+#### Connection test behavior
+
+- If `username` and `password` are present: uses `Authorization: Basic ...`.
+- If only password is present:
+- For Pure, sends both `X-Auth-Token` and `Authorization: Bearer ...`.
+- For Unity/Alletra, sends `Authorization: Bearer ...`.
+- TLS cert validation is relaxed for device APIs with self-signed certs.
+
 ### Storage API
 
 Use the storage endpoints to pull array summaries and LUN details directly:
@@ -35,6 +68,7 @@ Use the storage endpoints to pull array summaries and LUN details directly:
 - `GET /api/storage?view=summary` for array-level capacity summaries.
 - `GET /api/storage?view=luns` for normalized LUN records.
 - `GET /api/inventory` now includes Unity, Pure, and Alletra storage data alongside vCenter and iTOP.
+- Storage endpoints can return `warnings` for partial fetch failures (per source and scope) while still returning available data.
 
 ## Deploy with Docker (App container + External DB)
 

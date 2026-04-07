@@ -214,7 +214,7 @@ async function getStorageData(config: any) {
       config.system_type === 'unity'
         ? new UnityService(config.url, config.username, password)
         : config.system_type === 'pure'
-          ? new PureService(config.url, password)
+          ? new PureService(config.url, config.username, password)
           : new AlletraService(config.url, config.username, password);
       const storageService = service as unknown as Record<string, (...args: any[]) => Promise<any>>;
 
