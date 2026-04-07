@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import knex from 'knex';
-import { getMysqlConfig } from './src/config/mysql';
+import { getMysqlConfig } from '../src/config/mysql';
 
 async function migrate() {
   const db = knex(getMysqlConfig());
