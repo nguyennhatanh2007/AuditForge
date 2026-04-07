@@ -66,8 +66,8 @@ const privateIpv6Prefixes = ['::1', 'fc', 'fd', 'fe80'];
 const defaultApiPath: Record<ConnectionSystemType, string> = {
   itop: '/webservices/rest.php',
   vcenter: '/sdk',
-  unity: '/api/types/system/instances',
-  pure: '/api/2.0/array',
+  unity: '/api/types',
+  pure: '/api/2.0/arrays',
   alletra: '/api/v1',
 };
 
@@ -244,6 +244,14 @@ export async function runConnectionTest(input: ConnectionTestInput): Promise<Con
     if (username && password) {
       const basicAuth = Buffer.from(`${username}:${password}`).toString('base64');
       headers.Authorization = `Basic ${basicAuth}`;
+    } else if (password) {
+      if (input.systemType === 'pure') {
+        headers['X-Auth-Token'] = password;
+      }
+
+      if (input.systemType === 'unity' || input.systemType === 'alletra' || input.systemType === 'pure') {
+        headers.Authorization = `Bearer ${password}`;
+      }
     }
 
     const response = await fetch(targetUrl.toString(), {

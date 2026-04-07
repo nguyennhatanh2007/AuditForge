@@ -162,8 +162,8 @@ export function DiscrepanciesClient() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">Sai Lệch Dữ Liệu</h2>
-          <p className="text-sm text-mutedFg">So sánh dữ liệu từ iTOP CMDB với các hệ thống khác</p>
+          <h2 className="text-2xl font-semibold">Báo cáo sai lệch dữ liệu</h2>
+          <p className="text-sm text-mutedFg">Đối chiếu dữ liệu giữa iTOP và hệ thống nguồn.</p>
         </div>
         <div className="flex gap-2">
           <Button

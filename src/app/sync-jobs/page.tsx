@@ -7,12 +7,12 @@ import { syncJobs as mockSyncJobs } from '@/lib/mock-data';
 export const dynamic = 'force-dynamic';
 
 export default async function SyncJobsPage() {
-  let syncJobs = mockSyncJobs;
+  let syncJobs = mockSyncJobs.slice(0, 3);
 
   try {
-    syncJobs = await listSyncJobs();
+    syncJobs = await listSyncJobs(3);
   } catch {
-    syncJobs = mockSyncJobs;
+    syncJobs = mockSyncJobs.slice(0, 3);
   }
 
   return (
@@ -20,8 +20,8 @@ export default async function SyncJobsPage() {
       <div className="space-y-6">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-semibold">Lịch sử đồng bộ</h2>
-            <p className="text-sm text-mutedFg">Theo dõi các lần đồng bộ thủ công và định kỳ.</p>
+            <h2 className="text-3xl font-semibold">Nhật ký đồng bộ</h2>
+            <p className="text-sm text-mutedFg">Theo dõi phiên chạy và trạng thái xử lý.</p>
           </div>
           <Button type="button">Tải lại</Button>
         </div>

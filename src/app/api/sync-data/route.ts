@@ -114,7 +114,7 @@ async function syncUnity(config: any, operation?: string) {
 }
 
 async function syncPure(config: any, operation?: string) {
-  const service = new PureService(config.url, config.password);
+  const service = new PureService(config.url, config.username, config.password);
 
   switch (operation) {
     case 'arrays':

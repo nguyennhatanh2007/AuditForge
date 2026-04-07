@@ -45,7 +45,7 @@ export function SyncDataTable() {
 
   async function loadSyncJobs() {
     try {
-      const response = await fetch('/api/sync-jobs?limit=20');
+      const response = await fetch('/api/sync-jobs');
       const data = await response.json();
       setSyncJobs(data.data || []);
     } catch (error) {
@@ -109,7 +109,7 @@ export function SyncDataTable() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold">Dữ Liệu Được Sync</h2>
-          <p className="text-sm text-mutedFg">Lịch sử đồng bộ từ các hệ thống nguồn</p>
+          <p className="text-sm text-mutedFg">Lịch sử đồng bộ từ các hệ thống nguồn (3 lần gần nhất)</p>
         </div>
         <Button
           variant="secondary"
@@ -193,7 +193,7 @@ export function SyncDataTable() {
 
           {syncJobs.length > 0 && (
             <div className="border-t border-border/70 px-4 py-3 bg-slate-50 text-sm text-mutedFg">
-              Hiển thị {syncJobs.length} sync jobs gần đây · Cập nhật tự động mỗi 30 giây
+              Hiển thị {syncJobs.length}/3 sync jobs gần nhất · Cập nhật tự động mỗi 30 giây
             </div>
           )}
         </Card>

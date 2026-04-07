@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart3, Database, FileBarChart2, ShieldAlert, Settings, RefreshCcw, LayoutDashboard, HardDrive, TableIcon } from 'lucide-react';
+import { BarChart3, Database, FileBarChart2, ShieldAlert, Settings, RefreshCcw, LayoutDashboard, HardDrive, TableIcon, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -12,6 +12,7 @@ const items = [
   { href: '/discrepancies', label: 'Sai lệch dữ liệu', icon: ShieldAlert },
   { href: '/exceptions', label: 'Ngoại lệ', icon: Database },
   { href: '/configurations', label: 'Cấu hình kết nối', icon: Settings },
+  { href: '/capacity-planning', label: 'Capacity planning', icon: TrendingUp },
   { href: '/reports', label: 'Báo cáo', icon: FileBarChart2 },
 ];
 

@@ -286,6 +286,22 @@ export async function listSyncJobs(limit = 20) {
   return rows.map(mapSyncJob);
 }
 
+export async function trimSyncJobsHistory(keep = 3) {
+  const db = requireDb();
+  const staleRows = await db<SyncJobRow>('sync_jobs')
+    .select('id')
+    .orderBy('started_at', 'desc')
+    .orderBy('id', 'desc')
+    .offset(keep);
+
+  if (!staleRows.length) {
+    return 0;
+  }
+
+  const staleIds = staleRows.map((row) => row.id);
+  return db('sync_jobs').whereIn('id', staleIds).delete();
+}
+
 export async function getLatestSyncJobId() {
   const db = requireDb();
   const row = await db<SyncJobRow>('sync_jobs').orderBy('started_at', 'desc').first();
@@ -303,6 +319,7 @@ export async function createSyncJob(input: SyncJobInput) {
     discrepancies: input.discrepancies,
     note: input.note ?? null,
   });
+  await trimSyncJobsHistory(3);
   const row = await db<SyncJobRow>('sync_jobs').where({ id }).first();
   return row ? mapSyncJob(row) : null;
 }

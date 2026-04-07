@@ -56,9 +56,9 @@ export function InvenuoryClient() {
       {/* Header */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">📦 Kho Dữ Liệu Hệ Thống</h2>
+          <h2 className="text-2xl font-semibold">Kho dữ liệu hệ thống</h2>
           <p className="text-sm text-slate-600">
-            Xem dữ liệu thô (Inventory) từ tất cả các hệ thống kết nối. Đây là danh sách đầu đủ của các đối tượng từ mỗi nguồn.
+            Tổng hợp dữ liệu thô từ tất cả nguồn kết nối.
           </p>
         </div>
         <Button variant="ghost" onClick={() => void fetchInventory()} disabled={loading}>
@@ -224,16 +224,16 @@ export function InvenuoryClient() {
       {/* Info Card */}
       <Card className="bg-blue-50 border-blue-200">
         <div className="space-y-2">
-          <h4 className="font-semibold text-blue-900">ℹ️ Kho dữ liệu là gì?</h4>
+          <h4 className="font-semibold text-blue-900">Kho dữ liệu dùng để làm gì?</h4>
           <p className="text-sm text-blue-800">
-            <strong>Kho dữ liệu</strong> hiển thị danh sách đầy đủ của tất cả các đối tượng từ mỗi hệ thống kết nối:
+            Hiển thị đầy đủ đối tượng lấy từ từng hệ thống:
           </p>
           <ul className="text-sm text-blue-800 space-y-1 ml-4">
             <li>✓ <strong>iTOP</strong>: Máy ảo, Máy chủ, Ổ đĩa logic</li>
             <li>✓ <strong>vCenter/ESXi</strong>: VMs, ESXi Hosts, Datastores</li>
           </ul>
           <p className="text-sm text-blue-800 mt-2">
-            Đây là dữ liệu "thô" từ các nguồn, được sử dụng để <strong>phát hiện sai lệch</strong> khi so sánh giữa các hệ thống.
+            Dữ liệu này được dùng để phát hiện sai lệch.
           </p>
         </div>
       </Card>

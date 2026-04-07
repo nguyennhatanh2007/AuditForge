@@ -4,6 +4,7 @@ import { VcenterService } from '@/services/vcenter.service';
 import { ItopService } from '@/services/itop.service';
 import { decryptSecret } from '@/lib/crypto';
 import { getFriendlyErrorMessage } from '@/lib/friendly-error';
+import { trimSyncJobsHistory } from '@/lib/crud';
 
 interface DiscrepancyRecord {
   objectType: 'vm' | 'host' | 'lun';
@@ -316,6 +317,8 @@ export async function POST(request: Request) {
       await db('discrepancies').insert(discrepancyRecords);
       console.log(`📝 ${discrepancyRecords.length} discrepancies saved\n`);
     }
+
+    await trimSyncJobsHistory(3);
 
     const itopUpdates = applyItopUpdates ? await updateItopFromSources(systemDataMap) : {
       attempted: 0,

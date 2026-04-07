@@ -6,7 +6,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-changeme}
       MYSQL_DATABASE: ${DB_NAME:-auditforge}
     volumes:
-      - ./data/mysql:/var/lib/mysql
+      - ./mysql-data:/var/lib/mysql
     ports:
       - '3306:3306'
 
@@ -14,7 +14,7 @@ services:
     image: node:20-alpine
     working_dir: /app
     volumes:
-      - ./:/app
+      - ../:/app
       - /app/node_modules
     command: sh -c "npm install && npm run dev -- -p 3000"
     ports:
