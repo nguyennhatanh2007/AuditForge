@@ -27,9 +27,13 @@ if errorlevel 1 (
     exit /b 1
 )
 
-REM Build image
+REM Get project root (parent of docker folder)
+set SCRIPT_DIR=%~dp0
+for %%I in ("!SCRIPT_DIR!..\.") do set PROJECT_ROOT=%%~fI
+
 echo [*] Building Docker image: !FULL_IMAGE_NAME!
-docker build -t !FULL_IMAGE_NAME! .
+cd /d "!PROJECT_ROOT!"
+docker build -f docker\Dockerfile -t !FULL_IMAGE_NAME! .
 
 if errorlevel 1 (
     echo [X] Build failed!
@@ -45,11 +49,11 @@ if errorlevel 1 (
     echo [*] Lightweight mode (app only, external MySQL^):
     echo     1. copy .env.docker .env
     echo     2. Edit .env with your MySQL host/credentials
-    echo     3. docker-compose -f docker-compose.app.yml up -d
+    echo     3. docker-compose -f docker\docker-compose.app.yml up -d
     echo.
     echo [*] Full stack mode (app + MySQL^):
     echo     1. copy .env.docker .env
-    echo     2. docker-compose up -d
+    echo     2. docker-compose -f docker\docker-compose.yml up -d
     echo.
     echo [*] Access app: http://localhost:3000
     echo.

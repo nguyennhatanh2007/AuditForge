@@ -12,7 +12,9 @@ services:
       - '3306:3306'
 
   app:
-    build: .
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
     depends_on:
       - db
     ports:

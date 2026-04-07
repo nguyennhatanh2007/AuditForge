@@ -23,9 +23,14 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
 fi
 
-# Build image
+# Get script directory
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$( dirname "$SCRIPT_DIR" )"
+
+# Build image from project root
 echo "🔨 Building Docker image: $FULL_IMAGE_NAME"
-docker build -t "$FULL_IMAGE_NAME" .
+cd "$PROJECT_ROOT"
+docker build -f docker/Dockerfile -t "$FULL_IMAGE_NAME" .
 
 if [ $? -eq 0 ]; then
     echo "✅ Build successful!"
@@ -37,11 +42,11 @@ if [ $? -eq 0 ]; then
     echo "📌 Lightweight mode (app only, external MySQL):"
     echo "   1. cp .env.docker .env"
     echo "   2. Edit .env with your MySQL host/credentials"
-    echo "   3. docker-compose -f docker-compose.app.yml up -d"
+    echo "   3. docker-compose -f docker/docker-compose.app.yml up -d"
     echo ""
     echo "📌 Full stack mode (app + MySQL):"
     echo "   1. cp .env.docker .env"
-    echo "   2. docker-compose up -d"
+    echo "   2. docker-compose -f docker/docker-compose.yml up -d"
     echo ""
     echo "🌐 Access app: http://localhost:3000"
     echo ""

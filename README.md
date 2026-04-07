@@ -2,6 +2,14 @@
 
 Audit Forge is a Next.js 15 App Router web application for CMDB synchronization auditing.
 
+## Quick Navigation
+
+- 📁 **Project Structure**: See [PROJECT_STRUCTURE.md](../PROJECT_STRUCTURE.md) for complete folder organization
+- 🐳 **Docker Deployment**: See [docker/README.md](../docker/README.md) for container setup
+- 📚 **Docker Guide**: See [docker/DOCKER.md](../docker/DOCKER.md) for comprehensive deployment documentation
+- 🛠️ **Scripts & Testing**: See [scripts/README.md](../scripts/README.md) for available test and debug scripts
+- 📖 **Docs**: See [docs/FOLDER_GUIDE.md](./FOLDER_GUIDE.md) for documentation index
+
 ## Features in this scaffold
 
 - Dashboard with operational overview
