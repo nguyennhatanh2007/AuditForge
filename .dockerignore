@@ -1,0 +1,14 @@
+node_modules
+.next
+.vercel
+dist
+coverage
+.env.local
+.env
+npm-debug.log
+.git
+.gitignore
+*.tar
+*.tgz
+*.log
+data/mysql
