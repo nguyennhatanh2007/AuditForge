@@ -64,7 +64,7 @@ auditforge/
 ├── package-lock.json             # Dependency lock file
 │
 ├── tsconfig.json                 # TypeScript configuration
-├── next.config.ts                # Next.js configuration
+├── next.config.mjs               # Next.js configuration
 ├── tailwind.config.ts            # Tailwind CSS configuration
 ├── postcss.config.mjs            # PostCSS configuration
 ├── jest.config.js                # Jest testing configuration
